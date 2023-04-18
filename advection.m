@@ -9,8 +9,8 @@ clearvars
 
 
 %%% Setup grid in x-y
-N = 10; % number of grid point along one direction
-x = linspace(-5,5,N+1); % type 1 grid
+N = 100; % number of grid point along one direction
+x = linspace(-3,3,N+1); % type 1 grid
 dx = x(2)-x(1);
 % convert to type 2 grid
 x = x(1:end-1) + dx/2.0;
@@ -23,7 +23,7 @@ h = dx;
 [X,Y] = meshgrid(x,y); % make 2D grid
 
 % initial condition
-F = @(x, y) exp(-(x.^2+y.^2));
+F = @(x, y) 3*exp(-(x.^2+y.^2));
 u_0 = F(X, Y);
 
 % time stepping parameters
@@ -32,6 +32,10 @@ dt = CFL*(dx);
 T_final = 10;
 N_steps = T_final/dt;
 
+% physical parameters
+D = 0.01; % diffusion
+
+t_plot = 10000;
 
 u = u_0;
 for n = 1:N_steps
@@ -71,5 +75,15 @@ for n = 1:N_steps
 
     % still needs convection term added below
     u = u + dt*D*u_lap;
+
+    if mod(n,t_plot) == 0
+       surface = surf(X,Y,reshape(u,N,N));
+       set(surface,'edgecolor','none')
+       zlim([0 10])
+       title(['t = ' num2str(n*dt)])
+       colorbar
+       camlight
+       drawnow
+    end
 
 end
