@@ -27,24 +27,28 @@ F = @(x, y) 3*exp(-(x.^2+y.^2));
 u_0 = F(X, Y);
 
 % time stepping parameters
-CFL = 0.001;
+% CFL = 0.001;
+CFL = 1/(10*max(max(u_0)));
 dt = CFL*(dx);
-T_final = 10;
+T_final = 50;
 N_steps = T_final/dt;
 
 % physical parameters
 D = 0.01; % diffusion
 
-t_plot = 10000;
+
+
+t_plot = 100;
 
 u = u_0;
 for n = 1:N_steps
 
     u_lap = zeros(size(u));
-    % 2D finite laplacian
+    u_adv = zeros(size(u));
     for x_i = 1:N
         for y_i = 1:N
 
+            % 2D finite laplacian
             u_center = u(x_i, y_i);
             if x_i == 1 % left edge
                 u_west = u_center;
@@ -70,11 +74,25 @@ for n = 1:N_steps
             % finite difference laplacian w 5 point stencil
             u_lap(x_i, y_i) = (u_west + u_east + u_south + u_north - 4*u_center)*(1/h^2);
 
+
+            if x_i == 1 || x_i == N
+                u_adv(x_i, y_i) = 0;
+            else
+                % upwinding
+                if(vel(x_i) > 0)
+                    u_adv(x_i, y_i) = vel(x_i)*(u(x_i, y_i) - u(x_i-1, y_i))/dx;
+                else
+                    u_adv(x_i, y_i) = vel(x_i)*(u(x_i+1, y_i) - u(x_i, y_i))/dx;
+                end
+            end 
+
+
         end
     end
 
-    % still needs convection term added below
-    u = u + dt*D*u_lap;
+    % still needs advection term added below
+    % forward euler
+    u = u + dt*D*u_lap + u_adv*dt;
 
     if mod(n,t_plot) == 0
        surface = surf(X,Y,reshape(u,N,N));
@@ -85,5 +103,11 @@ for n = 1:N_steps
        camlight
        drawnow
     end
+
+end
+
+function v_x = vel(x)
+    
+    v_x = -0.05;
 
 end
