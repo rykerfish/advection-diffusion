@@ -50,4 +50,13 @@ int subtract_matrices(Vector* vec1, Vector vec2);
 //      flag:  integer flag, 0 if successful, -1 if not
 int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_grid);
 
+
+
+// Function to cleanup memory from a vector
+// Inputs:
+//      vec: vector to be deallocated.
+// Outputs:
+//      None, but vec will be set to null
+int deallocate_vector(Vector* vec);
+
 #endif

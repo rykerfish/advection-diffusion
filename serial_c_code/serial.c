@@ -175,3 +175,15 @@ int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_gr
     return 0;
 
 }
+
+
+int deallocate_vector(Vector* vec){
+
+    free(vec->data);
+    vec->data = NULL;
+
+    vec->dim_x = 0;
+    vec->dim_y = 0;
+
+    return 0;
+}

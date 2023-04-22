@@ -23,8 +23,11 @@ h = dx;
 [X,Y] = meshgrid(x,y); % make 2D grid
 
 % initial condition
-% F = @(x, y) 3*exp(-(x.^2+y.^2));
-u_0 = ic(X, Y);
+F = @(x, y) 3*exp(-(x.^2+y.^2));
+u_0 = F(X, Y);
+% u_0 = ic(X, Y);
+
+
 
 % time stepping parameters
 % CFL = 0.001;
