@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include "serial.h"
 
 int allocate_vector(Vector* vec, int dim_x, int dim_y){
@@ -44,10 +45,10 @@ int create_grid(Vector* vec, float start, float end, char dir){
 
         // loop through the rows
         int row, start_idx, end_idx;
-        for(row = 0; row < vec->dim_x, ++row){
+        for(row = 0; row < vec->dim_x; ++row){
             // determine start and end indices of this row
             start_idx = row*vec->dim_y;
-            end_idx = (row + 1)*vec->dim_y - 1
+            end_idx = (row + 1)*vec->dim_y - 1;
 
             // declare a float to keep track of current values
             float current_value = start + step / 2;
@@ -73,10 +74,10 @@ int create_grid(Vector* vec, float start, float end, char dir){
 
         // loop through the rows
         int row, start_idx, end_idx;
-        for(row = 0; row < vec->dim_x, ++row){
+        for(row = 0; row < vec->dim_x; ++row){
             // determine start and end indices of this row
             start_idx = row*vec->dim_y;
-            end_idx = (row + 1)*vec->dim_y - 1
+            end_idx = (row + 1)*vec->dim_y - 1;
 
             // set the first and last entries of the row
             vec->data[start_idx] = start + step / 2;
@@ -132,12 +133,12 @@ int subtract_matrices(Vector* vec1, Vector vec2){
     //      flag: integer flag, 0 if successful, -1 if not
 
     // ensure dimensions allign
-    if(vec1->dim_x != vec2->dim_x || vec1.dim_y != vec2.dim_y){
+    if(vec1->dim_x != vec2.dim_x || vec1->dim_y != vec2.dim_y){
         fprintf(stderr, "Error: matrix dimensions must be the same. \n");
         return -1;
     }
 
-    // do the addition
+    // do the subtraction
     int i;
     for(i = 0; i < vec1->dim_x*vec1->dim_y; ++i) vec1->data[i] -= vec2.data[i];
 
@@ -156,7 +157,7 @@ int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_gr
 
     // make sure dimensions allign
     if(u_grid->dim_x != x_grid->dim_x || x_grid->dim_x != y_grid->dim_x || u_grid->dim_y != x_grid->dim_y || x_grid->dim_y != y_grid->dim_x){
-        fprint(stderr, "Error: dimensions do not allign. \n");
+        fprintf(stderr, "Error: dimensions do not allign. \n");
         return -1;
     }
 
@@ -165,6 +166,7 @@ int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_gr
     for(i = 0; i < u_grid->dim_x*u_grid->dim_y; ++i) u_grid->data[i] = 0;
 
     // use x and y grids to construct the initial condition
+    int flag;
     flag = subtract_matrices(u_grid, square_matrix(x_grid));
     flag = subtract_matrices(u_grid, square_matrix(y_grid));
 
