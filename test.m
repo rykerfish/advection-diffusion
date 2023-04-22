@@ -26,7 +26,7 @@ h = dx;
 F = @(x, y) 3*exp(-(x.^2+y.^2));
 u_0 = F(X, Y);
 
-A = readmatrix("serial_c_code/out.txt");
+A = readmatrix("out/out.txt");
 
 norm(A - u_0) % should be small
 % for me, only 10e-4. I think that's fine- it's due to the difference in
