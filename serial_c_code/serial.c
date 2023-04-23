@@ -28,6 +28,20 @@ int allocate_vector(Vector* vec, int dim_x, int dim_y){
     return 0;
 }
 
+int create_zero_grid(Vector* vec){
+    // Function to fill an initialized vector with zeros
+    // Inputs:
+    //      vec:  vector to be filled with 0s
+    // Outputs:
+    //      flag: integer flag, 0 if successful, -1 if not
+
+    // fill the array with 0s
+    int i;
+    for(i = 0; i < vec->dim_x*vec->dim_y; ++i) vec->data[i] = 0;
+
+    return 0;
+}
+
 int create_grid(Vector* vec, float start, float end, char dir){
     // Function to create X and Y grids
     // Inputs:
@@ -146,6 +160,21 @@ int subtract_matrices(Vector* vec1, Vector vec2){
 
 }
 
+int scalar_multiply(Vector* vec, float c){
+    // Function to multiply each element of an array by a scalar
+    // Inputs:
+    //      vec:  vector whose elements we want to multiply by a scalar
+    //      c:    the scalar to multiply by
+    // Outputs:
+    //      flag: integer flag, 0 if successful, -1 if not
+
+    // do the multiplication
+    int i;
+    for(i = 0; i < vec->dim_x*vec->dim_y; ++i) vec->data[i] *= c;
+
+    return 0;
+}
+
 int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_grid){
     // Function to set a concentration vector to its initial condition
     // Inputs:
@@ -176,6 +205,41 @@ int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_gr
 
 }
 
+float find_max(Vector vec){
+    // Function to find the maximum value in a vector
+    // Inputs:
+    //      vec: vector to find the maximum value of
+    // Outputs:
+    //      max: the maximum value encountered in the vector
+
+    float max = -9999.99;
+    int i;
+    for(i = 0; i < vec.dim_x*vec.dim_y; ++i){
+        if(vec.data[i] > max){
+            max = vec.data[i];
+        }
+    }
+
+    return max;
+}
+
+float get_velocity(int x){
+    // Function to get the velocity corresponsding to a certain x coordinate
+    // Currently just a constant function
+    // Inputs:
+    //      x:   an integer representing where in the grid we are
+    // Outputs:
+    //      vel: a float representing velocity
+
+    return 0.1;
+}
+
+int write_to_file(Vector*){
+    // Function to write the data of a matrix to a file
+    // Not implemented yet
+    
+    return 0
+}
 
 int deallocate_vector(Vector* vec){
 
