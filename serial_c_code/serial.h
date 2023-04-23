@@ -86,7 +86,7 @@ float get_velocity(int x);
 //      filepath: string representing path to file
 // Outputs:
 //      flag:     integer flag, 0 if successful, -1 otherwise
-int write_to_file(Vector* vec, char* filepath);
+int write_to_file(Vector vec, char* filepath);
 
 // Function to cleanup memory from a vector
 // Inputs:
