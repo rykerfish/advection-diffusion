@@ -234,9 +234,32 @@ float get_velocity(int x){
     return 0.1;
 }
 
-int write_to_file(Vector*){
+int write_to_file(Vector vec, char* filepath){
     // Function to write the data of a matrix to a file
-    // Not implemented yet
+    // Inputs:
+    //      vec:      vector whose contents should be written
+    //      filepath: string representing path to file
+    // Outputs:
+    //      flag:     integer flag, 0 if successful, -1 otherwise
+
+    // declare file pointer
+    FILE* fptr;
+
+    // open the file and ensure it was successful
+    fptr = fopen(filepath, "w");
+    if(fptr == NULL){
+        fprintf(stderr, "Error opening file. \n");
+        return -1;
+    }
+
+    int i, j;
+    for(i = 0; i < vec.dim_x; ++i){
+        for(j = 0; j < vec.dim_y; ++j){
+            fprintf(fptr, "%f", vec.data[i + j*vec.dim_x]);
+            if(j < vec.dim_y - 1) fprintf(fptr, ", ");
+        }
+        fprintf(fptr, "\n");
+    }
     
     return 0
 }
