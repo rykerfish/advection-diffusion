@@ -261,7 +261,7 @@ int write_to_file(Vector vec, char* filepath){
         fprintf(fptr, "\n");
     }
     
-    return 0
+    return 0;
 }
 
 int deallocate_vector(Vector* vec){
