@@ -81,8 +81,12 @@ float find_max(Vector vec);
 float get_velocity(int x);
 
 // Function to write the data of a matrix to a file
-// Not implemented yet
-int write_to_file(Vector*);
+// Inputs:
+//      vec:      vector whose contents should be written
+//      filepath: string representing path to file
+// Outputs:
+//      flag:     integer flag, 0 if successful, -1 otherwise
+int write_to_file(Vector* vec, char* filepath);
 
 // Function to cleanup memory from a vector
 // Inputs:
