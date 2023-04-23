@@ -28,14 +28,83 @@ int main() {
 	// construct the concentration grid
 	initialize_concentration_vector(&u_grid, &x_grid, &y_grid);
 	
-	// print grid to console for comparison
-	int i;
-	for(i = 0; i < 100; ++i){
-		int j;
-		for(j = 0; j < 100; ++j){
-			printf("%f ", (&u_grid)->data[j*100 + i]);
+	// set time step parameters
+	float dx = u.data[1] - u.data[0];
+	float cfl = 1 / (10 * find_max(u_grid)); 
+	float dt = cfl * dx;
+	float t_final = 50;
+	int n_steps = t_final / dt;
+
+	// set physical parameters
+	float diffusion = 0.01;
+
+	// do the simulation
+	Vector u = u_grid;
+	Vector u_lap, u_adv;
+
+	// loop through the timesteps
+	int n;
+	for(n = 0; n < n_steps; ++n){
+		create_zero_grid(&u_lap);
+		create_zero_grid(&u_adv);
+
+		int x_i, y_i;
+		for(x_i = 0; x_i < cols; ++x_i){
+			for(y_i = 0; y_i < rows; ++y_i){
+				int idx = x_i + cols*y_i;
+				float u_center = u.data[idx];
+				
+				// 2D finite laplacian with finite boundary conditions
+				float u_west, u_east, u_north, u_south;
+				
+				if(x_i == 0){ // left edge
+					u_west = u.data[idx + cols - 1];
+				} else {
+					u_west = u.data[idx - 1];
+				}
+
+				if(x_i == cols - 1){ // right edge
+					u_east = u.data[idx - cols + 1];
+				} else {
+					u_east = u.data[idx + 1];
+				}
+
+				if(y_i == 0){ // top edge
+					u_north = u.data[(rows - 1)*cols + x_i];
+				} else {
+					u_north = u.data[idx - cols];
+				}
+
+				if(y_i == rows - 1){ // bottom edge
+					u_south = u.data[x_i];
+				} else {
+					u_south = u.data[idx + cols];
+				}
+
+				// calculate dinite difference laplacian with a 5 point stencil
+				&u_lap->data[idx] = (u_west + u_east _ u_south _ u_north - 4*u_center)*(1/dx)*(1/dx);
+
+				// implement upwinding
+				float velocity = get_velocity(x_i);
+				if(velocity > 0){
+					&u_adv->data[idx] = velocity * (u.data[idx] - u_west) / dx;
+				} else {
+					&u_adv->data[idx] = velocity * (u_east - u.data[idx]) / dx;
+				}
+
+
+
+			}
 		}
-		printf("\n");
+
+		// write the previous state to a files for later visualization
+		// TODO: implement this function
+		write_to_file(u);
+
+		// update the concentration data using forward euler
+		subtract_matrices(&u, *(scalar_multiply(scalar_multiply(scalar_multiply(&u_lap, -1), dt), diffusion)));
+		subtract_matrices(&u, *(scalar_multiply(scalar_multiply(&u_adv, -1), dt)));
+
 	}
 	
 	// clean up
