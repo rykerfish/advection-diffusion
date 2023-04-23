@@ -111,6 +111,9 @@ int main() {
 	deallocate_vector(&u_grid);
 	deallocate_vector(&x_grid);
 	deallocate_vector(&y_grid);
+	deallocate_vector(&u);
+	deallocate_vector(&u_lap);
+	deallocate_vector(&u_adv);
 	
 	return 0;
 
