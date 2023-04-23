@@ -16,6 +16,13 @@ typedef struct Vector_tag {
 //      flag:  integer flag, 0 if successful, -1 if not
 int allocate_vector(Vector* vec, int dim_x, int dim_y);
 
+// Function to fill an initialized vector with zeros
+// Inputs:
+//      vec:  vector to be filled with 0s
+// Outputs:
+//      flag: integer flag, 0 if successful, -1 if not
+int create_zero_grid(Vector* vec);
+
 // Function to create X and Y grids
 // Inputs:
 //      vec:   vector to fill with the X or Y grid
@@ -41,6 +48,14 @@ Vector square_matrix(Vector* vec);
 //      flag: integer flag, 0 if successful, -1 if not
 int subtract_matrices(Vector* vec1, Vector vec2);
 
+// Function to multiply each element of an array by a scalar
+// Inputs:
+//      vec:  vector whose elements we want to multiply by a scalar
+//      c:    the scalar to multiply by
+// Outputs:
+//      flag: integer flag, 0 if successful, -1 if not
+int scalar_multiply(Vector* vec, float c);
+
 // Function to set a concentration vector to its initial condition
 // Inputs:
 //      u_grid: vector to hold concentration data
@@ -50,7 +65,24 @@ int subtract_matrices(Vector* vec1, Vector vec2);
 //      flag:  integer flag, 0 if successful, -1 if not
 int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_grid);
 
+// Function to find the maximum value in a vector
+// Inputs:
+//      vec: vector to find the maximum value of
+// Outputs:
+//      max: the maximum value encountered in the vector
+float find_max(Vector vec);
 
+// Function to get the velocity corresponsding to a certain x coordinate
+// Currently just a constant function
+// Inputs:
+//      x:   an integer representing where in the grid we are
+// Outputs:
+//      vel: a float representing velocity
+float get_velocity(int x);
+
+// Function to write the data of a matrix to a file
+// Not implemented yet
+int write_to_file(Vector*);
 
 // Function to cleanup memory from a vector
 // Inputs:
