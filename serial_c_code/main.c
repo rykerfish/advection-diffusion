@@ -103,8 +103,13 @@ int main() {
 		write_to_file(u, fpath);
 
 		// update the concentration data using forward euler
-		subtract_matrices(&u, *(scalar_multiply(scalar_multiply(scalar_multiply(&u_lap, -1), dt), diffusion)));
-		subtract_matrices(&u, *(scalar_multiply(scalar_multiply(&u_adv, -1), dt)));
+		scalar_multiply(&u_lap, -1);
+		scalar_multiply(&u_lap, dt);
+		scalar_multiply(&u_lap, diffusion);
+		scalar_multiply(&u_adv, -1);
+		scalar_multiply(&u_adv, dt);
+		subtract_matrices(&u, u_lap);
+		subtract_matrices(&u, u_adv);
 
 	}
 	
@@ -112,6 +117,9 @@ int main() {
 	deallocate_vector(&u_grid);
 	deallocate_vector(&x_grid);
 	deallocate_vector(&y_grid);
+	deallocate_vector(&u);
+	deallocate_vector(&u_lap);
+	deallocate_vector(&u_adv);
 	
 	return 0;
 
