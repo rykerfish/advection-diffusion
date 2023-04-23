@@ -29,7 +29,7 @@ int main() {
 	initialize_concentration_vector(&u_grid, &x_grid, &y_grid);
 	
 	// set time step parameters
-	float dx = u.data[1] - u.data[0];
+	float dx = x_grid.data[1] - x_grid.data[0];
 	float cfl = 1 / (10 * find_max(u_grid)); 
 	float dt = cfl * dx;
 	float t_final = 50;
@@ -82,14 +82,14 @@ int main() {
 				}
 
 				// calculate dinite difference laplacian with a 5 point stencil
-				&u_lap->data[idx] = (u_west + u_east _ u_south _ u_north - 4*u_center)*(1/dx)*(1/dx);
+				(&u_lap)->data[idx] = (u_west + u_east + u_south + u_north - 4*u_center)*(1/dx)*(1/dx);
 
 				// implement upwinding
 				float velocity = get_velocity(x_i);
 				if(velocity > 0){
-					&u_adv->data[idx] = velocity * (u.data[idx] - u_west) / dx;
+					(&u_adv)->data[idx] = velocity * (u.data[idx] - u_west) / dx;
 				} else {
-					&u_adv->data[idx] = velocity * (u_east - u.data[idx]) / dx;
+					(&u_adv)->data[idx] = velocity * (u_east - u.data[idx]) / dx;
 				}
 
 
