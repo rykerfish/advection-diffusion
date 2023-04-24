@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "serial.h"
 
 int allocate_vector(Vector* vec, int dim_x, int dim_y){
@@ -248,7 +249,7 @@ int write_to_file(Vector vec, char* filepath){
     // open the file and ensure it was successful
     fptr = fopen(filepath, "w");
     if(fptr == NULL){
-        fprintf(stderr, "Error opening file. \n");
+        fprintf(stderr, "Error opening file, error number %d \n", errno);
         return -1;
     }
 
@@ -261,6 +262,8 @@ int write_to_file(Vector vec, char* filepath){
         fprintf(fptr, "\n");
     }
     
+    fclose(fptr);
+
     return 0;
 }
 

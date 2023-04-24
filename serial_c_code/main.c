@@ -103,10 +103,8 @@ int main() {
 		char fpath[25];
 		char* fptr = fpath;
 		sprintf(fptr, "./output/state_%d.csv", n);
-		printf(fptr);
-		printf("\n");
 		write_to_file(u_grid, fptr);
-
+		
 		// update the concentration data using forward euler
 		scalar_multiply(&u_lap, -1);
 		scalar_multiply(&u_lap, dt);
