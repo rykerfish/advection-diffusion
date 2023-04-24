@@ -39,8 +39,13 @@ int main() {
 	float diffusion = 0.01;
 
 	// do the simulation
-	Vector u = u_grid;
-	Vector u_lap, u_adv;
+	Vector u, u_lap, u_adv;
+
+	allocate_vector(&u_lap, rows, cols);
+	allocate_vector(&u_adv, rows, cols);
+	allocate_vector(&u, rows, cols);
+
+	u = u_grid;
 
 	// loop through the timesteps
 	int n;
@@ -98,9 +103,12 @@ int main() {
 		}
 
 		// write the previous state to a files for later visualization
-		char* fpath;
-		sprintf(fpath, "./output/state_%d.csv", n);
-		write_to_file(u, fpath);
+		char fpath[25];
+		char* fptr = fpath;
+		sprintf(fptr, "./output/state_%d.csv", n);
+		printf(fptr);
+		printf("\n");
+		write_to_file(u, fptr);
 
 		// update the concentration data using forward euler
 		scalar_multiply(&u_lap, -1);
