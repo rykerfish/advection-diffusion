@@ -39,13 +39,10 @@ int main() {
 	float diffusion = 0.01;
 
 	// do the simulation
-	Vector u, u_lap, u_adv;
+	Vector u_lap, u_adv;
 
 	allocate_vector(&u_lap, rows, cols);
 	allocate_vector(&u_adv, rows, cols);
-	allocate_vector(&u, rows, cols);
-
-	u = u_grid;
 
 	// loop through the timesteps
 	int n;
@@ -57,33 +54,33 @@ int main() {
 		for(x_i = 0; x_i < cols; ++x_i){
 			for(y_i = 0; y_i < rows; ++y_i){
 				int idx = x_i + cols*y_i;
-				float u_center = u.data[idx];
+				float u_center = u_grid.data[idx];
 				
 				// 2D finite laplacian with finite boundary conditions
 				float u_west, u_east, u_north, u_south;
 				
 				if(x_i == 0){ // left edge
-					u_west = u.data[idx + cols - 1];
+					u_west = u_grid.data[idx + cols - 1];
 				} else {
-					u_west = u.data[idx - 1];
+					u_west = u_grid.data[idx - 1];
 				}
 
 				if(x_i == cols - 1){ // right edge
-					u_east = u.data[idx - cols + 1];
+					u_east = u_grid.data[idx - cols + 1];
 				} else {
-					u_east = u.data[idx + 1];
+					u_east = u_grid.data[idx + 1];
 				}
 
 				if(y_i == 0){ // top edge
-					u_north = u.data[(rows - 1)*cols + x_i];
+					u_north = u_grid.data[(rows - 1)*cols + x_i];
 				} else {
-					u_north = u.data[idx - cols];
+					u_north = u_grid.data[idx - cols];
 				}
 
 				if(y_i == rows - 1){ // bottom edge
-					u_south = u.data[x_i];
+					u_south = u_grid.data[x_i];
 				} else {
-					u_south = u.data[idx + cols];
+					u_south = u_grid.data[idx + cols];
 				}
 
 				// calculate dinite difference laplacian with a 5 point stencil
@@ -92,9 +89,9 @@ int main() {
 				// implement upwinding
 				float velocity = get_velocity(x_i);
 				if(velocity > 0){
-					(&u_adv)->data[idx] = velocity * (u.data[idx] - u_west) / dx;
+					(&u_adv)->data[idx] = velocity * (u_grid.data[idx] - u_west) / dx;
 				} else {
-					(&u_adv)->data[idx] = velocity * (u_east - u.data[idx]) / dx;
+					(&u_adv)->data[idx] = velocity * (u_east - u_grid.data[idx]) / dx;
 				}
 
 
@@ -108,7 +105,7 @@ int main() {
 		sprintf(fptr, "./output/state_%d.csv", n);
 		printf(fptr);
 		printf("\n");
-		write_to_file(u, fptr);
+		write_to_file(u_grid, fptr);
 
 		// update the concentration data using forward euler
 		scalar_multiply(&u_lap, -1);
@@ -116,8 +113,8 @@ int main() {
 		scalar_multiply(&u_lap, diffusion);
 		scalar_multiply(&u_adv, -1);
 		scalar_multiply(&u_adv, dt);
-		subtract_matrices(&u, u_lap);
-		subtract_matrices(&u, u_adv);
+		subtract_matrices(&u_grid, u_lap);
+		subtract_matrices(&u_grid, u_adv);
 
 	}
 	
@@ -125,7 +122,6 @@ int main() {
 	deallocate_vector(&u_grid);
 	deallocate_vector(&x_grid);
 	deallocate_vector(&y_grid);
-	deallocate_vector(&u);
 	deallocate_vector(&u_lap);
 	deallocate_vector(&u_adv);
 	
