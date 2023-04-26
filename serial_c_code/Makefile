@@ -1,8 +1,8 @@
 buildMain:
-	gcc -o main main.c serial.c -lm 
+	gcc -g -o main main.c serial.c -lm 
 
 runMain:
-	./main
+	gdb ./main
 
 cleanMain:
 	rm main
