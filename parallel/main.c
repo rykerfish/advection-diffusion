@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 	MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periodic, 1, &grid_comm);
 	
 	// determine current rank
-	MPI_Comm_rank(grid_comm, &rank);
+	int rank;
 	MPI_Comm_rank(grid_comm, &rank);
 	
 	if(rank == 0){
