@@ -10,18 +10,18 @@ int main(int argc, char** argv) {
         	printf("Error: Should call with <# of processes> <grid size>\n");
         	return 1;
     	}
-    	int n_procs = atoi(argv[1]);
-    	int grid_size = atoi(argv[2]);
+	int n_procs = atoi(argv[1]);
+	int grid_size = atoi(argv[2]);
 
-    	MPI_Init(&argc, &argv);
+	MPI_Init(&argc, &argv);
 
-    	int ndims = 2;
-    	int dims[ndims];
+	int ndims = 2;
+	int dims[ndims];
    	int periodic[] = {1, 1};
-    	MPI_Dims_create(n_procs, ndims, dims);
+	MPI_Dims_create(n_procs, ndims, dims);
 
 	MPI_Comm grid;	
-	MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periodic, 1, &grid);
+	MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periodic, 1, grid);
 
 	// declare vectors
 	Vector u_grid; 
@@ -36,12 +36,12 @@ int main(int argc, char** argv) {
 	allocate_vector(&y_grid, rows, cols);
 	
 	// create grids for constructing the concentration grid
-	float x_start = -3.0;
-	float x_end = 3.0;
-	float y_start = -3.0;
-	float y_end = 3.0;
-	create_grid(&x_grid, x_start, x_end, 'x');
-	create_grid(&y_grid, y_start, y_end, 'y');
+	float a = -3.0; 
+	float b = 3.0;
+	float x_bounds[] = {a, b};
+	float y_bounds[] = {a, b};
+	create_grid(&x_grid, x_bounds[0], x_bounds[1], 'x');
+	create_grid(&y_grid, y_bounds[0], y_bounds[1], 'y');
 
 	float dx = x_grid.data[1] - x_grid.data[0];
 	float dy = y_grid.data[rows + 1] - y_grid.data[0];
@@ -56,8 +56,8 @@ int main(int argc, char** argv) {
 	MPI_Cart_coords(grid, rank, ndims, coords);
 	
 	// calculate size of subgrid
-	sub_x_dim = u_grid.x_dim / dims[0];
-	sub_y_dim = u_grid.y_dim / dims[1];
+	int sub_x_dim = u_grid.dim_x / dims[0];
+	int sub_y_dim = u_grid.dim_y / dims[1];
 	
 	// determine start and end indices
 	int x_start = coords[0] * sub_x_dim;
@@ -66,13 +66,13 @@ int main(int argc, char** argv) {
 	int y_end = y_start + sub_y_dim;
 	
 	// make sure these are valid indices
-	if(x_end > u_grid.x_dim || y_end > u_grid.y_dim){
+	if(x_end > u_grid.dim_x || y_end > u_grid.dim_y){
 		printf("Error: sub arrays are not contained within main array");
 		return 1;
 	}
 	
 	// allocated memory for local array
-	float* local data = (float*)malloc(sub_x_dim * sub_y_dim * sizeof(float));
+	float* local_data = (float*)malloc(sub_x_dim * sub_y_dim * sizeof(float));
 	
 	// copy the relevant data
 	int i, j;
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
 		for(j = y_start; j < y_end; ++j){
 			int sub_i = i - x_start;
 			int sub_j = j - y_start;
-			int idx = i * u_grid.y_dim + j;
+			int idx = i * u_grid.dim_y + j;
 			int sub_idx = sub_i * sub_y_dim + sub_j;
 			local_data[sub_idx] = u_grid.data[idx];
 		}
