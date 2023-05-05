@@ -84,17 +84,21 @@ int main(int argc, char** argv) {
 	float* local_data = (float*)malloc(sub_x_dim * sub_y_dim * sizeof(float));
 	
 	// copy the relevant data
-	int i, j;
-	for(i = x_start; i < x_end; ++i) {
-		for(j = y_start; j < y_end; ++j){
-			int sub_i = i - x_start;
-			int sub_j = j - y_start;
-			int idx = i * u_grid.dim_y + j;
-			int sub_idx = sub_i * sub_y_dim + sub_j;
-			local_data[sub_idx] = u_grid.data[idx];
-		}
-	}
+// 	int i, j;
+// 	for(i = x_start; i < x_end; ++i) {
+// 		for(j = y_start; j < y_end; ++j){
+// 			int sub_i = i - x_start;
+// 			int sub_j = j - y_start;
+// 			int idx = i * u_grid.dim_y + j;
+// 			int sub_idx = sub_i * sub_y_dim + sub_j;
+// 			local_data[sub_idx] = u_grid.data[idx];
+// 		}
+// 	}
 	
+	// scatter the data to each process
+	int local_size = sub_x_dim * sub_y_dim;
+	MPI_Scatter(&u_grid, local_size, MPI_FLOAT, local_data, local_size, MPI_FLOAT, 0, grid_comm);
+			
 	MPI_Finalize();
 
 }
