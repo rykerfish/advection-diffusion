@@ -26,31 +26,33 @@ int main(int argc, char** argv) {
 	MPI_Comm grid_comm;
 	MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periodic, 1, &grid_comm);
 
-	// declare vectors
-	Vector u_grid; 
-	Vector x_grid;
-	Vector y_grid;
-	
-	// allocate vectors
-	int rows = grid_size;
-	int cols = grid_size;
-	allocate_vector(&u_grid, rows, cols);
-	allocate_vector(&x_grid, rows, cols);
-	allocate_vector(&y_grid, rows, cols);
-	
-	// create grids for constructing the concentration grid
-	float a = -3.0; 
-	float b = 3.0;
-	float x_bounds[] = {a, b};
-	float y_bounds[] = {a, b};
-	create_grid(&x_grid, x_bounds[0], x_bounds[1], 'x');
-	create_grid(&y_grid, y_bounds[0], y_bounds[1], 'y');
+	if(rank == 0){
+		// declare vectors
+		Vector u_grid; 
+		Vector x_grid;
+		Vector y_grid;
 
-	float dx = x_grid.data[1] - x_grid.data[0];
-	float dy = y_grid.data[rows + 1] - y_grid.data[0];
+		// allocate vectors
+		int rows = grid_size;
+		int cols = grid_size;
+		allocate_vector(&u_grid, rows, cols);
+		allocate_vector(&x_grid, rows, cols);
+		allocate_vector(&y_grid, rows, cols);
 
-	// construct the concentration grid
-	initialize_concentration_vector(&u_grid, &x_grid, &y_grid);
+		// create grids for constructing the concentration grid
+		float a = -3.0; 
+		float b = 3.0;
+		float x_bounds[] = {a, b};
+		float y_bounds[] = {a, b};
+		create_grid(&x_grid, x_bounds[0], x_bounds[1], 'x');
+		create_grid(&y_grid, y_bounds[0], y_bounds[1], 'y');
+
+		float dx = x_grid.data[1] - x_grid.data[0];
+		float dy = y_grid.data[rows + 1] - y_grid.data[0];
+
+		// construct the concentration grid
+		initialize_concentration_vector(&u_grid, &x_grid, &y_grid);
+	}
 	
 	// determine current coordinates
 	int rank;
@@ -59,8 +61,8 @@ int main(int argc, char** argv) {
 	MPI_Cart_coords(grid_comm, rank, ndims, coords);
 	
 	// calculate size of subgrid
-	int sub_x_dim = u_grid.dim_x / dims[0];
-	int sub_y_dim = u_grid.dim_y / dims[1];
+	int sub_x_dim = grid_size / dims[0];
+	int sub_y_dim = grid_size / dims[1];
 	
 	// determine start and end indices
 	int x_start = coords[0] * sub_x_dim;
@@ -73,8 +75,8 @@ int main(int argc, char** argv) {
 	}
 
 	// make sure these are valid indices
-	if(x_end > u_grid.dim_x || y_end > u_grid.dim_y){
-		printf("Error: sub arrays are not contained within main array");
+	if(x_end > grid_size || y_end > grid_size){
+		fprintf(stderr, "Error: sub arrays are not contained within main array");
 		return 1;
 	}
 	
