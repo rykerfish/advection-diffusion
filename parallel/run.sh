@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -N 1 
+#SBATCH -N 1
 #SBATCH --ntasks-per-node=4
 #SBATCH -t 00:01:00
 
@@ -12,4 +12,4 @@ module load mpi/openmpi/gcc/4.1.1
 #Build code
 mpicc -o main main.c parallel.c -lm
 
-./main 4 100
+mpirun -np 4 main 4 8

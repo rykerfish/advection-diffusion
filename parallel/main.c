@@ -6,22 +6,25 @@
 
 int main(int argc, char** argv) {
 
-    	if(argc < 2){
-        	printf("Error: Should call with <# of processes> <grid size>\n");
-        	return 1;
-    	}
+	if(argc < 2){
+		printf("Error: Should call with <# of processes> <grid size>\n");
+		return 1;
+	}
+	
 	int n_procs = atoi(argv[1]);
 	int grid_size = atoi(argv[2]);
 
 	MPI_Init(&argc, &argv);
+	int size;
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 	int ndims = 2;
 	int dims[ndims];
    	int periodic[] = {1, 1};
 	MPI_Dims_create(n_procs, ndims, dims);
 
-	MPI_Comm grid;	
-	MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periodic, 1, grid);
+	MPI_Comm grid_comm;
+	MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periodic, 1, &grid_comm);
 
 	// declare vectors
 	Vector u_grid; 
@@ -52,8 +55,8 @@ int main(int argc, char** argv) {
 	// determine current coordinates
 	int rank;
 	int coords[ndims];
-	MPI_Comm_rank(grid, &rank);
-	MPI_Cart_coords(grid, rank, ndims, coords);
+	MPI_Comm_rank(grid_comm, &rank);
+	MPI_Cart_coords(grid_comm, rank, ndims, coords);
 	
 	// calculate size of subgrid
 	int sub_x_dim = u_grid.dim_x / dims[0];
@@ -65,6 +68,10 @@ int main(int argc, char** argv) {
 	int x_end = x_start + sub_x_dim;
 	int y_end = y_start + sub_y_dim;
 	
+	if(rank == 0){
+		printf("x_start: %d\n x_end: %d\n y_start: %d\n, y_end: %d\n");
+	}
+
 	// make sure these are valid indices
 	if(x_end > u_grid.dim_x || y_end > u_grid.dim_y){
 		printf("Error: sub arrays are not contained within main array");
@@ -86,5 +93,6 @@ int main(int argc, char** argv) {
 		}
 	}
 	
+	MPI_Finalize();
 
 }
