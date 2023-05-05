@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "serial.h"
+#include "parallel.h"
 
 int allocate_vector(Vector* vec, int dim_x, int dim_y){
     // Function to allocate space for a vector
