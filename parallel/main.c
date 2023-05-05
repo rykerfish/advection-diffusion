@@ -25,7 +25,11 @@ int main(int argc, char** argv) {
 
 	MPI_Comm grid_comm;
 	MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periodic, 1, &grid_comm);
-
+	
+	// determine current rank
+	MPI_Comm_rank(grid_comm, &rank);
+	MPI_Comm_rank(grid_comm, &rank);
+	
 	if(rank == 0){
 		// declare vectors
 		Vector u_grid; 
@@ -55,9 +59,7 @@ int main(int argc, char** argv) {
 	}
 	
 	// determine current coordinates
-	int rank;
 	int coords[ndims];
-	MPI_Comm_rank(grid_comm, &rank);
 	MPI_Cart_coords(grid_comm, rank, ndims, coords);
 	
 	// calculate size of subgrid
