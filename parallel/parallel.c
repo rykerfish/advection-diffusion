@@ -2,26 +2,27 @@
 #include <math.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <mpi.h>
 #include "parallel.h"
 
-int allocate_vector(Vector* vec, int dim_x, int dim_y){
-    // Function to allocate space for a vector
+int allocate_matrix(Matrix* mat, int dim_x, int dim_y){
+    // Function to allocate space for a matrix
     // Inputs:
-    //      vec: vector to allocate space for
+    //      mat: matrix to allocate space for
     //      dim_x: integer representing number of rows desired
     //      dim_y: integer representing number of columns desired
     // Ouputs:
     //      flag: integer flag, 0 if successful, -1 if not
 
     // set metadata
-    vec->dim_x = dim_x;
-    vec->dim_y = dim_y;
+    mat->dim_x = dim_x;
+    mat->dim_y = dim_y;
 
     // allocate space
-    vec->data = (float*)malloc((vec->dim_x*vec->dim_y)*sizeof(float));
+    mat->data = (float*)malloc((mat->dim_x*mat->dim_y)*sizeof(float));
 
     // ensure allocation was successful
-    if(vec->data == NULL){
+    if(mat->data == NULL){
         fprintf(stderr, "Error allocating data. \n");
         return -1;
     }
@@ -29,24 +30,10 @@ int allocate_vector(Vector* vec, int dim_x, int dim_y){
     return 0;
 }
 
-int create_zero_grid(Vector* vec){
-    // Function to fill an initialized vector with zeros
-    // Inputs:
-    //      vec:  vector to be filled with 0s
-    // Outputs:
-    //      flag: integer flag, 0 if successful, -1 if not
-
-    // fill the array with 0s
-    int i;
-    for(i = 0; i < vec->dim_x*vec->dim_y; ++i) vec->data[i] = 0;
-
-    return 0;
-}
-
-int create_grid(Vector* vec, float start, float end, char dir){
+int create_grid(Matrix* mat, float start, float end, char dir){
     // Function to create X and Y grids
     // Inputs:
-    //      vec:   vector to fill with the X or Y grid
+    //      mat:   matrix to fill with the X or Y grid
     //      start: float representing where the grid should start
     //      end:   float representing where the grid should end
     //      dir:   character representing whether it should be an X or Y grid
@@ -56,14 +43,14 @@ int create_grid(Vector* vec, float start, float end, char dir){
     // if it should be an X grid, do one thing
     if(dir == 'X' || dir == 'x'){
         // determine the spacing of the grid
-        float step = (end - start) / vec->dim_y;
+        float step = (end - start) / mat->dim_y;
 
         // loop through the rows
         int row, start_idx, end_idx;
-        for(row = 0; row < vec->dim_x; ++row){
+        for(row = 0; row < mat->dim_x; ++row){
             // determine start and end indices of this row
-            start_idx = row*vec->dim_y;
-            end_idx = (row + 1)*vec->dim_y - 1;
+            start_idx = row*mat->dim_y;
+            end_idx = (row + 1)*mat->dim_y - 1;
 
             // declare a float to keep track of current values
             float current_value = start + step / 2;
@@ -72,7 +59,7 @@ int create_grid(Vector* vec, float start, float end, char dir){
             int idx;
             for(idx = start_idx; idx <= end_idx; ++idx){
                 // assign value to current index and update it
-                vec->data[idx] = current_value;
+                mat->data[idx] = current_value;
                 current_value += step;
             }
         }
@@ -82,27 +69,27 @@ int create_grid(Vector* vec, float start, float end, char dir){
     // if it should be a Y grid, do another
     else if(dir == 'Y' || dir == 'y'){
         // determine the spacing of the grid
-        float step = (end - start) / vec->dim_x;
+        float step = (end - start) / mat->dim_x;
 
         // decare a float to keep track of current values
         float current_value = start + step / 2;
 
         // loop through the rows
         int row, start_idx, end_idx;
-        for(row = 0; row < vec->dim_x; ++row){
+        for(row = 0; row < mat->dim_x; ++row){
             // determine start and end indices of this row
-            start_idx = row*vec->dim_y;
-            end_idx = (row + 1)*vec->dim_y - 1;
+            start_idx = row*mat->dim_y;
+            end_idx = (row + 1)*mat->dim_y - 1;
 
             // set the first and last entries of the row
-            vec->data[start_idx] = start + step / 2;
-            vec->data[end_idx] = end - step / 2;
+            mat->data[start_idx] = start + step / 2;
+            mat->data[end_idx] = end - step / 2;
 
             // fill in the row
             int idx;
             for(idx = start_idx; idx <= end_idx; ++idx){
                 // assign current value to each index
-                vec->data[idx] = current_value;
+                mat->data[idx] = current_value;
             }
 
             // update current value
@@ -119,55 +106,55 @@ int create_grid(Vector* vec, float start, float end, char dir){
     return 1;
 }
 
-Vector square_matrix(Vector* vec){
-    // Function to square a vector elementwise
+Matrix square_matrix(Matrix* mat){
+    // Function to square a matrix elementwise
     // Inputs:
-    //      vec: vector to square elementwise
+    //      mat: matrix to square elementwise
     // Outputs:
-    //      res: squared vector
+    //      res: squared matrix
 
-    // allocate result vector
-    Vector res;
-    int flag = allocate_vector(&res, vec->dim_x, vec->dim_y);
+    // allocate result matrix
+    Matrix res;
+    int flag = allocate_matrix(&res, mat->dim_x, mat->dim_y);
 
-    // calculate entries of result vector
+    // calculate entries of result matrix
     int i;
     for(i = 0; i < res.dim_x*res.dim_y; ++i){
-        res.data[i] = vec->data[i]*vec->data[i];
+        res.data[i] = mat->data[i]*mat->data[i];
     }
 
     return res;
 }
 
-int subtract_matrices(Vector* vec1, Vector vec2){
+int subtract_matrices(Matrix* mat1, Matrix mat2){
     // Function to subtract two matrices and store the result in the first
     // Inputs:
-    //      vec1: vector to subtract the second array from
-    //      vec2: vector to be subtracted from the first array
+    //      mat1: matrix to subtract the second array from
+    //      mat2: matrix to be subtracted from the first array
     // Outputs:
     //      flag: integer flag, 0 if successful, -1 if not
 
     // ensure dimensions allign
-    if(vec1->dim_x != vec2.dim_x || vec1->dim_y != vec2.dim_y){
+    if(mat1->dim_x != mat2.dim_x || mat1->dim_y != mat2.dim_y){
         fprintf(stderr, "Error: matrix dimensions must be the same. \n");
         return -1;
     }
 
     // do the subtraction
     int i;
-    for(i = 0; i < vec1->dim_x*vec1->dim_y; ++i) vec1->data[i] -= vec2.data[i];
+    for(i = 0; i < mat1->dim_x*mat1->dim_y; ++i) mat1->data[i] -= mat2.data[i];
 
     return 0;
 
 }
 
 
-int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_grid){
-    // Function to set a concentration vector to its initial condition
+int initialize_concentration_matrix(Matrix* u_grid, Matrix* x_grid, Matrix* y_grid){
+    // Function to set a concentration matrix to its initial condition
     // Inputs:
-    //      u_grid: vector to hold concentration data
-    //      x_grid: vector containing an x grid
-    //      y_grid: vector contianing a y grid
+    //      u_grid: matrix to hold concentration data
+    //      x_grid: matrix containing an x grid
+    //      y_grid: matrix contianing a y grid
     // Outputs:
     //      flag:  integer flag, 0 if successful, -1 if not
 
@@ -192,13 +179,54 @@ int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_gr
 
 }
 
-int deallocate_vector(Vector* vec){
+int perform_scatter(float* u_grid, int grid_size, int nprocs, float* local_data){
 
-    free(vec->data);
-    vec->data = NULL;
+    // calculate size of subgrid
+	int row_len = grid_size;
+	int num_rows_in_block = grid_size / nprocs;
+	int local_size = row_len * num_rows_in_block; 
+	int padded_size = local_size + 2*row_len; // add 2 for ghost region rows
 
-    vec->dim_x = 0;
-    vec->dim_y = 0;
+    printf("PADDED: %d\n", padded_size);
+
+	// allocated memory for local array
+	local_data = (float*)malloc(padded_size * sizeof(float));
+	
+	// scatter the data to each process
+	// start row_len into local_data so that there is room for ghost region
+	MPI_Scatter(u_grid, local_size, MPI_FLOAT, local_data + row_len, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+    printf("data: %f", local_data[3]);
+
+    return local_size;
+}
+
+void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_neighbor, int down_neighbor){
+    
+    // setup for communcations
+	MPI_Status status[4];
+	MPI_Request request[4];
+	int i;
+	for(i = 0; i < 4; i++) request[i] = MPI_REQUEST_NULL;
+
+    int padded_size = local_size + 2*row_len;
+
+	// do ghost region comms
+	MPI_Isend(local_data + row_len, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[0]); // send first row of data to upper neighbor
+	MPI_Isend(local_data + local_size, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[1]); // send last row of data to lower neighbor
+	MPI_Irecv(local_data, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[2]); // recv data from upper neighbor
+	MPI_Irecv(local_data + padded_size - row_len, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[3]); // recv data from lower neighbor
+
+	MPI_Waitall(4, request, status);
+}
+
+int deallocate_matrix(Matrix* mat){
+
+    free(mat->data);
+    mat->data = NULL;
+
+    mat->dim_x = 0;
+    mat->dim_y = 0;
 
     return 0;
 }

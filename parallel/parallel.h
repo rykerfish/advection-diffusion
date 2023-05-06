@@ -1,68 +1,65 @@
 #ifndef __PARALLEL_H__
 #define __PARALLEL_H__
 
-typedef struct Vector_tag {
-    float* data; // vector to hold concentration (or other) data
+typedef struct Matrix_tag {
+    float* data; // matrix to hold concentration (or other) data
     int dim_x; // number of rows
     int dim_y; // number of columns
-} Vector;
+} Matrix;
 
-// Function to allocate space for a vector
+// Function to allocate space for a matrix
 // Inputs:
-//      vec:   vector to allocate space for
+//      mat:   matrix to allocate space for
 //      dim_x: integer representing number of rows desired
 //      dim_y: integer representing number of columns desired
 // Ouputs:
 //      flag:  integer flag, 0 if successful, -1 if not
-int allocate_vector(Vector* vec, int dim_x, int dim_y);
-
-// Function to fill an initialized vector with zeros
-// Inputs:
-//      vec:  vector to be filled with 0s
-// Outputs:
-//      flag: integer flag, 0 if successful, -1 if not
-int create_zero_grid(Vector* vec);
+int allocate_matrix(Matrix* mat, int dim_x, int dim_y);
 
 // Function to create X and Y grids
 // Inputs:
-//      vec:   vector to fill with the X or Y grid
+//      mat:   matrix to fill with the X or Y grid
 //      start: float representing where the grid should start
 //      end:   float representing where the grid should end
 //      dir:   character representing whether it should be an X or Y grid
 // Outputs:
 //      flag:  integer flag, 0 if successful, -1 if not
-int create_grid(Vector* vec, float start, float end, char dir);
+int create_grid(Matrix* mat, float start, float end, char dir);
 
-// Function to square a vector elementwise
+// Function to square a matrix elementwise
 // Inputs:
-//      vec: vector to square elementwise
+//      mat: matrix to square elementwise
 // Outputs:
-//      res: squared vector
-Vector square_matrix(Vector* vec);
+//      res: squared matrix
+Matrix square_matrix(Matrix* mat);
 
 // Function to subtract two matrices and store the result in the first
 // Inputs:
-//      vec1: vector to subtract the second array from
-//      vec2: vector to be subtracted from the first array
+//      mat1: matrix to subtract the second array from
+//      mat2: matrix to be subtracted from the first array
 // Outputs:
 //      flag: integer flag, 0 if successful, -1 if not
-int subtract_matrices(Vector* vec1, Vector vec2);
+int subtract_matrices(Matrix* mat1, Matrix mat2);
 
 
-// Function to set a concentration vector to its initial condition
+// Function to set a concentration matrix to its initial condition
 // Inputs:
-//      u_grid: vector to hold concentration data
-//      x_grid: vector containing an x grid
-//      y_grid: vector contianing a y grid
+//      u_grid: matrix to hold concentration data
+//      x_grid: matrix containing an x grid
+//      y_grid: matrix contianing a y grid
 // Outputs:
 //      flag:  integer flag, 0 if successful, -1 if not
-int initialize_concentration_vector(Vector* u_grid, Vector* x_grid, Vector* y_grid);
+int initialize_concentration_matrix(Matrix* u_grid, Matrix* x_grid, Matrix* y_grid);
 
-// Function to cleanup memory from a vector
+void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_neighbor, int down_neighbor);
+
+int perform_scatter(float* u_grid, int grid_size, int nprocs, float* local_data);
+
+// Function to cleanup memory from a matrix
 // Inputs:
-//      vec: vector to be deallocated.
+//      mat: matrix to be deallocated.
 // Outputs:
-//      None, but vec will be set to null
-int deallocate_vector(Vector* vec);
+//      None, but mat will be set to null
+int deallocate_matrix(Matrix* mat);
 
 #endif
