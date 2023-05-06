@@ -116,38 +116,11 @@ int main(int argc, char** argv) {
 		for(x_i = 0; x_i < cols; ++x_i){
 			for(y_i = 0; y_i < rows; ++y_i){
 				int idx = x_i + cols*y_i;
-				int pad_idx = idx + cols; // extra col for ghost region
-				float u_center = padded_data[pad_idx];
+				int pad_idx = idx + cols;
+	
+				float u_west, u_east;
 				
-				// 2D finite laplacian with finite boundary conditions
-				float u_west, u_east, u_north, u_south;
-				
-				if(x_i == 0){ // left edge
-					u_west = padded_data[pad_idx + cols - 1];
-				} else {
-					u_west = padded_data[pad_idx - 1];
-				}
-
-				if(x_i == cols - 1){ // right edge
-					u_east = padded_data[pad_idx - cols + 1];
-				} else {
-					u_east = padded_data[pad_idx + 1];
-				}
-
-				if(y_i == 0){ // top edge
-					u_north = padded_data[(rows - 1)*cols + x_i];
-				} else {
-					u_north = padded_data[pad_idx - cols];
-				}
-
-				if(y_i == rows - 1){ // bottom edge
-					u_south = padded_data[x_i];
-				} else {
-					u_south = padded_data[pad_idx + cols];
-				}
-
-				// calculate finite difference laplacian with a 5 point stencil
-				u_lap = (u_west + u_east + u_south + u_north - 4*u_center)*(1/dx)*(1/dx);
+				u_lap = compute_laplacian(padded_data, x_i, y_i + 1, rows, cols, dx, &u_east, &u_west);
 
 				if(rank == 0){
 					if(x_i == 0 && y_i == 0){
