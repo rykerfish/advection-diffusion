@@ -55,6 +55,8 @@ void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_
 
 int perform_scatter(float* u_grid, int grid_size, int nprocs, float* local_data);
 
+float compute_laplacian(float* data, int x_i, int y_i, int rows, int cols, float dx, float* u_east, float* u_west);
+
 // Function to cleanup memory from a matrix
 // Inputs:
 //      mat: matrix to be deallocated.

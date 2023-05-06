@@ -120,6 +120,84 @@ int main(){
         }
     }
 
+    // ----------- Testing Laplacian in the middle-------------------
+    if(rank == 0){
+        testCount++;
+        printf("Test %d. Testing laplacian calculation in middle of array.\n", testCount);
+        printf("------------------------------------------------- \n");
+    }
+
+    int test_passed = 0;
+    if(rank == 1){
+        float target_lap = 0.0;
+        float u_west, u_east;
+        float actual_lap = compute_laplacian(local_data, 1, 1, 3, 3, (float)1, &u_east, &u_west);
+        if(actual_lap == target_lap) test_passed = 1;
+    }
+
+    MPI_Bcast(&test_passed, 1, MPI_INT, 1, MPI_COMM_WORLD);
+
+    if(rank == 0){
+        if(test_passed == 0){
+            testsFailed++;
+            printf("TEST FAILED: Incorrect laplacian using middle of rank 1 \n");
+        } else{
+            testsPassed++;
+        }
+    }
+
+    // ----------- Testing Laplacian on the side-------------------
+    if(rank == 0){
+        testCount++;
+        printf("Test %d. Testing laplacian calculation on the side of array.\n", testCount);
+        printf("------------------------------------------------- \n");
+    }
+
+    test_passed = 0;
+    if(rank == 1){
+        float target_lap = -3.0;
+        float u_west, u_east;
+        float actual_lap = compute_laplacian(local_data, 2, 1, 3, 3, (float)1, &u_east, &u_west);
+        if(actual_lap == target_lap) test_passed = 1;
+    }
+
+    MPI_Bcast(&test_passed, 1, MPI_INT, 1, MPI_COMM_WORLD);
+
+    if(rank == 0){
+        if(test_passed == 0){
+            testsFailed++;
+            printf("TEST FAILED: Incorrect laplacian using right edge of rank 1 \n");
+        } else{
+            testsPassed++;
+        }
+    }
+
+    // ----------- Testing Laplacian on the corner-------------------
+    if(rank == 0){
+        testCount++;
+        printf("Test %d. Testing laplacian calculation on the corner of array.\n", testCount);
+        printf("------------------------------------------------- \n");
+    }
+
+    test_passed = 0;
+    if(rank == 1){
+        float target_lap = 6.0;
+        float u_west, u_east;
+        float actual_lap = compute_laplacian(local_data, 2, 0, 3, 3, (float)1, &u_east, &u_west);
+        if(actual_lap == target_lap) test_passed = 1;
+    }
+
+    MPI_Bcast(&test_passed, 1, MPI_INT, 1, MPI_COMM_WORLD);
+
+    if(rank == 0){
+        if(test_passed == 0){
+            testsFailed++;
+            printf("TEST FAILED: Incorrect laplacian using top right corner of rank 1 \n");
+        } else{
+            testsPassed++;
+        }
+    }
+
 
     if(rank == 0){
 

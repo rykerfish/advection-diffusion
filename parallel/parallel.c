@@ -220,6 +220,43 @@ void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_
 	MPI_Waitall(4, request, status);
 }
 
+float compute_laplacian(float* data, int x_i, int y_i, int rows, int cols, float dx, float* u_east, float* u_west){
+
+    int idx = x_i + cols * y_i;
+    float u_north, u_south, u_center;
+    int i;
+    u_center = data[idx];
+
+
+    if(x_i == 0){ // left edge
+		*u_west = data[idx + cols - 1];
+	} else {
+		*u_west = data[idx - 1];
+	}
+
+	if(x_i == cols - 1){ // right edge
+		*u_east = data[idx - cols + 1];
+	} else {
+		*u_east = data[idx + 1];
+	}
+
+	if(y_i == 0){ // top edge
+		u_north = data[(rows - 1)*cols + x_i];
+	} else {
+		u_north = data[idx - cols];
+	}
+
+	if(y_i == rows - 1){ // bottom edge
+		u_south = data[x_i];
+	} else {
+		u_south = data[idx + cols];
+	}
+
+	// calculate finite difference laplacian with a 5 point stencil
+    float u_lap = (*u_west + *u_east + u_south + u_north - 4.0*u_center)*(1.0/dx)*(1.0/dx);
+    return u_lap;
+}
+
 int deallocate_matrix(Matrix* mat){
 
     free(mat->data);
