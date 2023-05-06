@@ -189,12 +189,12 @@ int perform_scatter(float* u_grid, int grid_size, int nprocs, float* local_data)
 
     printf("PADDED: %d\n", padded_size);
 
-	// allocated memory for local array
+	// allocate memory for local array
 	local_data = (float*)malloc(padded_size * sizeof(float));
 	
 	// scatter the data to each process
 	// start row_len into local_data so that there is room for ghost region
-	MPI_Scatter(u_grid, local_size, MPI_FLOAT, local_data + row_len, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+	MPI_Scatter(u_grid, local_size, MPI_FLOAT, &local_data[row_len], local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
     printf("data: %f", local_data[3]);
 

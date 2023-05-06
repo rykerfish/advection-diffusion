@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
 	int i;
 
 	if(argc < 1){
-		printf("Error: Should call with <# of processes> <grid size>\n");
+		printf("Error: Should call with <grid size>\n");
 		return 1;
 	}
 	
@@ -62,46 +62,44 @@ int main(int argc, char** argv) {
 	int padded_size = local_size + 2*row_len; // add 2 for ghost region rows
 
 	// allocated memory for local array
-	float* local_data = (float*)malloc(local_size * sizeof(float));
+	float* padded_data = (float*)malloc(padded_size * sizeof(float));
 	
 	// scatter the data to each process
 	// start row_len into local_data so that there is room for ghost region
-	MPI_Scatter(u_grid.data, local_size, MPI_FLOAT, local_data, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+	MPI_Scatter(u_grid.data, local_size, MPI_FLOAT, &padded_data[row_len], local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-	float* padded_data = (float*)malloc(padded_size * sizeof(float));
-	for(i = 0; i <row_len; i++){
-		padded_data[i+row_len] = local_data[i];
-	}
+	//float* padded_data = (float*)malloc(padded_size * sizeof(float));
+	//for(i = 0; i <row_len; i++){
+	//	padded_data[i+row_len] = local_data[i];
+	//}
 
 	int up_neighbor, down_neighbor;
 	if(rank == 0){
-		up_neighbor = 3;
+		up_neighbor = nprocs - 1;
 	} else {
 		up_neighbor = rank - 1;
 	}
 
-	if(rank == 3){
+	if(rank == nprocs - 1){
 		down_neighbor = 0;
 	} else {
 		down_neighbor = rank + 1;
 	}
 	
 	// setup for communcations
-	MPI_Status status[4];
-	MPI_Request request[4];
-	for(i = 0; i < 4; i++) request[i] = MPI_REQUEST_NULL;
+	//MPI_Status status[4];
+	//MPI_Request request[4];
+	//for(i = 0; i < 4; i++) request[i] = MPI_REQUEST_NULL;
 
 	// do ghost region comms
-	MPI_Isend(padded_data + row_len, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[0]); // send first row of data to upper neighbor
-	printf("rank %d made 1\n", rank);
-	MPI_Isend(padded_data + local_size, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[1]); // send last row of data to lower neighbor
-	printf("rank %d made 2\n", rank);
-	MPI_Irecv(padded_data, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[2]); // recv data from upper neighbor
-	printf("rank %d made 3\n", rank);
-	MPI_Irecv(padded_data + padded_size - row_len, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[3]); // recv data from lower neighbor
-	printf("rank %d made 4\n", rank);
+	//MPI_Isend(padded_data + row_len, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[0]); // send first row of data to upper neighbor
+	//MPI_Isend(padded_data + local_size, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[1]); // send last row of data to lower neighbor
+	//MPI_Irecv(padded_data, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[2]); // recv data from upper neighbor
+	//MPI_Irecv(padded_data + padded_size - row_len, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[3]); // recv data from lower neighbor
 
-	MPI_Waitall(4, request, status);
+	perform_ghost_comms(padded_data, local_size, row_len, up_neighbor, down_neighbor);
+
+	//MPI_Waitall(4, request, status);
 	printf("DONE WAITING\n");
 
 
@@ -186,7 +184,7 @@ int main(int argc, char** argv) {
 
 	// }
 
-	free(local_data);
+	free(padded_data);
 	deallocate_matrix(&u_grid);
 	
 	MPI_Finalize();
