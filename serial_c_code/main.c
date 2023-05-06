@@ -11,8 +11,8 @@ int main() {
 	Vector y_grid;
 	
 	// allocate vectors
-	int rows = 100;
-	int cols = 100;
+	int rows = 128;
+	int cols = 128;
 	allocate_vector(&u_grid, rows, cols);
 	allocate_vector(&x_grid, rows, cols);
 	allocate_vector(&y_grid, rows, cols);
@@ -96,14 +96,6 @@ int main() {
 				u_update.data[idx] = u_grid.data[idx] + dt*(diffusion*u_lap + u_adv);
 			}
 		}
-		
-		// // write the previous state to a files for later visualization
-		// char fpath[25];
-		// char* fptr = fpath;
-		// sprintf(fptr, "./output/state_%d.csv", n);
-		// write_to_file(u_grid, fptr);
-		
-
 		int i;
 		// overwrite prev iteration with current iteration
 		for(i = 0; i <rows*cols; i++){
@@ -112,7 +104,7 @@ int main() {
 
 	}
 
-	char* filepath = "../out/sim_out.txt";
+	char* filepath = "../out/serial_sim_out.txt";
 	write_to_file(u_grid, filepath);
 	
 	// clean up

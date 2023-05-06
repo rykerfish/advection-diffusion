@@ -187,16 +187,12 @@ int perform_scatter(float* u_grid, int grid_size, int nprocs, float* local_data)
 	int local_size = row_len * num_rows_in_block; 
 	int padded_size = local_size + 2*row_len; // add 2 for ghost region rows
 
-    printf("PADDED: %d\n", padded_size);
-
 	// allocate memory for local array
 	local_data = (float*)malloc(padded_size * sizeof(float));
 	
 	// scatter the data to each process
 	// start row_len into local_data so that there is room for ghost region
 	MPI_Scatter(u_grid, local_size, MPI_FLOAT, &local_data[row_len], local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
-    printf("data: %f", local_data[3]);
 
     return local_size;
 }
@@ -218,6 +214,38 @@ void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_
 	MPI_Irecv(local_data + padded_size - row_len, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[3]); // recv data from lower neighbor
 
 	MPI_Waitall(4, request, status);
+}
+
+int write_to_file(Matrix mat, char* filepath){
+    // Function to write the data of a matrix to a file
+    // Inputs:
+    //      mat:      matrix whose contents should be written
+    //      filepath: string representing path to file
+    // Outputs:
+    //      flag:     integer flag, 0 if successful, -1 otherwise
+
+    // declare file pointer
+    FILE* fptr;
+
+    // open the file and ensure it was successful
+    fptr = fopen(filepath, "w");
+    if(fptr == NULL){
+        fprintf(stderr, "Error opening file, error number %d \n", errno);
+        return -1;
+    }
+
+    int i, j;
+    for(i = 0; i < mat.dim_x; ++i){
+        for(j = 0; j < mat.dim_y; ++j){
+            fprintf(fptr, "%f", mat.data[i + j*mat.dim_x]);
+            if(j < mat.dim_y - 1) fprintf(fptr, ", ");
+        }
+        fprintf(fptr, "\n");
+    }
+    
+    fclose(fptr);
+
+    return 0;
 }
 
 int deallocate_matrix(Matrix* mat){

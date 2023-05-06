@@ -55,6 +55,14 @@ void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_
 
 int perform_scatter(float* u_grid, int grid_size, int nprocs, float* local_data);
 
+// Function to write the data of a matrix to a file
+// Inputs:
+//      vec:      matrix whose contents should be written
+//      filepath: string representing path to file
+// Outputs:
+//      flag:     integer flag, 0 if successful, -1 otherwise
+int write_to_file(Matrix mat, char* filepath);
+
 // Function to cleanup memory from a matrix
 // Inputs:
 //      mat: matrix to be deallocated.

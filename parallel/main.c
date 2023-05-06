@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
 		printf("Error: Should call with <grid size>\n");
 		return 1;
 	}
-	
+
 	int grid_size = atoi(argv[1]);
 
 	MPI_Init(&argc, &argv);
@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	
 	Matrix u_grid; 
+	float dx;
 	if(rank == 0){
 		// declare matrixs
 		Matrix x_grid;
@@ -44,8 +45,7 @@ int main(int argc, char** argv) {
 		create_grid(&x_grid, x_bounds[0], x_bounds[1], 'x');
 		create_grid(&y_grid, y_bounds[0], y_bounds[1], 'y');
 
-		float dx = x_grid.data[1] - x_grid.data[0];
-		float dy = y_grid.data[rows + 1] - y_grid.data[0];
+		dx = x_grid.data[1] - x_grid.data[0];
 
 		// construct the concentration grid
 		initialize_concentration_matrix(&u_grid, &x_grid, &y_grid);
@@ -68,11 +68,6 @@ int main(int argc, char** argv) {
 	// start row_len into local_data so that there is room for ghost region
 	MPI_Scatter(u_grid.data, local_size, MPI_FLOAT, &padded_data[row_len], local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-	//float* padded_data = (float*)malloc(padded_size * sizeof(float));
-	//for(i = 0; i <row_len; i++){
-	//	padded_data[i+row_len] = local_data[i];
-	//}
-
 	int up_neighbor, down_neighbor;
 	if(rank == 0){
 		up_neighbor = nprocs - 1;
@@ -85,107 +80,118 @@ int main(int argc, char** argv) {
 	} else {
 		down_neighbor = rank + 1;
 	}
-	
-	// setup for communcations
-	//MPI_Status status[4];
-	//MPI_Request request[4];
-	//for(i = 0; i < 4; i++) request[i] = MPI_REQUEST_NULL;
 
-	// do ghost region comms
-	//MPI_Isend(padded_data + row_len, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[0]); // send first row of data to upper neighbor
-	//MPI_Isend(padded_data + local_size, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[1]); // send last row of data to lower neighbor
-	//MPI_Irecv(padded_data, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[2]); // recv data from upper neighbor
-	//MPI_Irecv(padded_data + padded_size - row_len, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[3]); // recv data from lower neighbor
+	// set time step parameters
+	float cfl = 0.01;
+	float dt = cfl * dx;
+	float t_final = 5;
+	int n_steps = t_final / dt;
 
-	perform_ghost_comms(padded_data, local_size, row_len, up_neighbor, down_neighbor);
+	// set physical parameters
+	float diffusion = 0.01;
+	float velocity = 0.1;
 
-	//MPI_Waitall(4, request, status);
-	printf("DONE WAITING\n");
-
-
-	// // set time step parameters
-	// float cfl = 0.01;
-	// float dt = cfl * dx;
-	// float t_final = 10;
-	// int n_steps = t_final / dt;
-
-	// // set physical parameters
-	// float diffusion = 0.01;
-
-	// // do the simulation
-	// Matrix u_update;
-	// allocate_matrix(&u_update, rows, cols);
+	// do the simulation
+	Matrix u_update;
+	allocate_matrix(&u_update, local_size, local_size);
 
 	// loop through the timesteps
-	// int n;
-	// for(n = 0; n < n_steps; ++n){
-	// 	float u_lap, u_adv;
+	int n;
+	int plot_step = 1000;
+	int cols = local_size;
+	int rows = local_size;
+	perform_ghost_comms(padded_data, local_size, row_len, up_neighbor, down_neighbor);
+	printf("Rank %d HERE\n", rank);
+	for(n = 0; n < n_steps; ++n){
+		printf("rank %d in loop\n", rank);
+		float u_lap, u_adv;
+		printf("ENTERING GHOST COMMS\n");
+		perform_ghost_comms(padded_data, local_size, row_len, up_neighbor, down_neighbor);
 
-	// 	int x_i, y_i;
-	// 	for(x_i = 0; x_i < cols; ++x_i){
-	// 		for(y_i = 0; y_i < rows; ++y_i){
-	// 			int idx = x_i + cols*y_i;
-	// 			float u_center = u_grid.data[idx];
+		printf("THRU GHOST COMMS\n");
+
+		int x_i, y_i;
+
+		for(x_i = 0; x_i < cols; ++x_i){
+			for(y_i = 0; y_i < rows; ++y_i){
+				int idx = x_i + cols*y_i;
+				int pad_idx = idx + cols; // extra col for ghost region
+				float u_center = padded_data[pad_idx];
 				
-	// 			// 2D finite laplacian with finite boundary conditions
-	// 			float u_west, u_east, u_north, u_south;
+				// 2D finite laplacian with finite boundary conditions
+				float u_west, u_east, u_north, u_south;
 				
-	// 			if(x_i == 0){ // left edge
-	// 				u_west = u_grid.data[idx + cols - 1];
-	// 			} else {
-	// 				u_west = u_grid.data[idx - 1];
-	// 			}
+				if(x_i == 0){ // left edge
+					u_west = padded_data[pad_idx + cols - 1];
+				} else {
+					u_west = padded_data[pad_idx - 1];
+				}
 
-	// 			if(x_i == cols - 1){ // right edge
-	// 				u_east = u_grid.data[idx - cols + 1];
-	// 			} else {
-	// 				u_east = u_grid.data[idx + 1];
-	// 			}
+				if(x_i == cols - 1){ // right edge
+					u_east = padded_data[pad_idx - cols + 1];
+				} else {
+					u_east = padded_data[pad_idx + 1];
+				}
 
-	// 			if(y_i == 0){ // top edge
-	// 				u_north = u_grid.data[(rows - 1)*cols + x_i];
-	// 			} else {
-	// 				u_north = u_grid.data[idx - cols];
-	// 			}
+				if(y_i == 0){ // top edge
+					u_north = padded_data[(rows - 1)*cols + x_i];
+				} else {
+					u_north = padded_data[pad_idx - cols];
+				}
 
-	// 			if(y_i == rows - 1){ // bottom edge
-	// 				u_south = u_grid.data[x_i];
-	// 			} else {
-	// 				u_south = u_grid.data[idx + cols];
-	// 			}
+				if(y_i == rows - 1){ // bottom edge
+					u_south = padded_data[x_i];
+				} else {
+					u_south = padded_data[pad_idx + cols];
+				}
 
-	// 			// calculate finite difference laplacian with a 5 point stencil
-	// 			u_lap = (u_west + u_east + u_south + u_north - 4*u_center)*(1/dx)*(1/dx);
+				// calculate finite difference laplacian with a 5 point stencil
+				u_lap = (u_west + u_east + u_south + u_north - 4*u_center)*(1/dx)*(1/dx);
 
-	// 			// implement upwinding
-	// 			float velocity = get_velocity(x_i);
-	// 			if(velocity > 0){
-	// 				u_adv = velocity * (u_grid.data[idx] - u_west) / dx;
-	// 			} else {
-	// 				u_adv = velocity * (u_east - u_grid.data[idx]) / dx;
-	// 			}
-	// 			// update the concentration data using forward euler
-	// 			u_update.data[idx] = u_grid.data[idx] + dt*(diffusion*u_lap + u_adv);
-	// 		}
-	// 	}
-		
-	// 	// // write the previous state to a files for later visualization
-	// 	// char fpath[25];
-	// 	// char* fptr = fpath;
-	// 	// sprintf(fptr, "./output/state_%d.csv", n);
-	// 	// write_to_file(u_grid, fptr);
-		
+				// implement upwinding
+				if(velocity > 0){
+					u_adv = velocity * (padded_data[pad_idx] - u_west) / dx;
+				} else {
+					u_adv = velocity * (u_east - padded_data[pad_idx]) / dx;
+				}
+				// update the concentration data using forward euler
+				u_update.data[idx] = padded_data[pad_idx] + dt*(diffusion*u_lap + u_adv);
+			}
+		}
 
-	// 	int i;
-	// 	// overwrite prev iteration with current iteration
-	// 	for(i = 0; i <rows*cols; i++){
-	// 		u_grid.data[i] = u_update.data[i];
-	// 	}
+		// overwrite prev iteration with current iteration
+		for(i = 0; i <rows*cols; i++){
+			padded_data[i+cols] = u_update.data[i];
+		}
 
-	// }
+		if(n % plot_step == 0){
+			printf("Iteration %d\n", n);
+		}
+
+		// write the previous state to a files for later visualization
+		// if(n % plot_step == 0){
+		// 	char fpath[25];
+		// 	char* fptr = fpath;
+		// 	sprintf(fptr, "./output/state_%d.csv", n);
+		// 	write_to_file(u_grid, fptr);
+		// }
+	}
+
+	
+	if(rank == 0){
+
+		MPI_Gather(&padded_data[row_len], local_size, MPI_FLOAT, &u_grid.data, rows*cols, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+		char* filepath = "../out/parallel_sim_out.txt";
+		write_to_file(u_grid, filepath);
+
+		deallocate_matrix(&u_grid);
+	}
+
 
 	free(padded_data);
-	deallocate_matrix(&u_grid);
+	deallocate_matrix(&u_update);
+
 	
 	MPI_Finalize();
 
