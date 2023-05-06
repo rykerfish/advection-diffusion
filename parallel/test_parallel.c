@@ -198,6 +198,43 @@ int main(){
         }
     }
 
+    // ------------ Testing advective term in middle ------------
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+    testCount++;
+    if(rank == 0) printf("Test %d. Testing advection term.\n", testCount);
+
+    float target_adv = 1.0;
+    int x_i = 1; 
+    int y_i = 0;
+    int idx = x_i + grid_size*(y_i + 1);
+    float u_west = 3;
+    float u_east = 5;
+
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+
+
+    test_passed = 0;
+    if(rank == 1){
+        float actual_adv = calculate_advection(local_data, idx, 1, 1, u_west, u_east);
+
+        if(abs(actual_adv-target_adv) < 1e-5){
+            test_passed++;
+        }
+    }
+    MPI_Bcast(&test_passed, 1, MPI_INT, 1, MPI_COMM_WORLD);
+
+    if(rank == 0){
+        if(test_passed != 1){
+            printf("WARNING: Test %d failed: incorrect advective term.\n", testCount);
+            testsFailed++;
+        } else {
+            testsPassed++;
+        }
+        printf("---------------------------------\n");
+    }
+
 
     if(rank == 0){
 
