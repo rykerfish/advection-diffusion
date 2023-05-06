@@ -217,7 +217,7 @@ int main(){
 
     test_passed = 0;
     if(rank == 1){
-        float actual_adv = calculate_advection(local_data, idx, 1, 1, u_west, u_east);
+        float actual_adv = compute_advection(local_data, idx, 1, 1, u_east, u_west);
 
         if(abs(actual_adv-target_adv) < 1e-5){
             test_passed++;

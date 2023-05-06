@@ -105,6 +105,8 @@ int main(int argc, char** argv) {
 
 	allocate_matrix(&u_update, rows, cols);
 
+	n_steps = 1;
+
 	for(n = 0; n < n_steps; ++n){
 		MPI_Barrier(MPI_COMM_WORLD);
 
@@ -120,23 +122,9 @@ int main(int argc, char** argv) {
 	
 				float u_west, u_east;
 				
+				// add 1 to y_i to get past the padded row on top
 				u_lap = compute_laplacian(padded_data, x_i, y_i + 1, rows, cols, dx, &u_east, &u_west);
-
-				if(rank == 0){
-					if(x_i == 0 && y_i == 0){
-						printf("0,0 u_lap, %f\n", u_lap);
-					} else if(x_i == 25 && y_i == 21){
-						printf("25,21 u_lap, %f\n", u_lap);
-					}
-				}
-
-
-				// implement upwinding
-				if(velocity > 0){
-					u_adv = velocity * (padded_data[pad_idx] - u_west) / dx;
-				} else {
-					u_adv = velocity * (u_east - padded_data[pad_idx]) / dx;
-				}
+				u_adv = compute_advection(padded_data, pad_idx, velocity, dx, u_east, u_west);
 				// update the concentration data using forward euler
 				u_update.data[idx] = padded_data[pad_idx] + dt*(diffusion*u_lap + u_adv);
 			}
@@ -155,7 +143,7 @@ int main(int argc, char** argv) {
 		// 	write_to_file(u_grid, fptr);
 		// }
 	}
-	
+
 
 	MPI_Gather(&padded_data[row_len], local_size, MPI_FLOAT, u_grid.data, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
