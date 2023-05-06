@@ -65,6 +65,8 @@ int write_to_file(Matrix mat, char* filepath);
 
 float compute_laplacian(float* data, int x_i, int y_i, int rows, int cols, float dx, float* u_east, float* u_west);
 
+float calculate_advection(float* data, int idx, float velocity, float dx, float u_west, float u_east);
+
 // Function to cleanup memory from a matrix
 // Inputs:
 //      mat: matrix to be deallocated.

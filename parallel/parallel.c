@@ -285,6 +285,19 @@ float compute_laplacian(float* data, int x_i, int y_i, int rows, int cols, float
     return u_lap;
 }
 
+float calculate_advection(float* data, int idx, float velocity, float dx, float u_west, float u_east){
+    
+    float u_adv;
+
+    if(velocity > 0){
+        u_adv = velocity * (data[idx] - u_west) / dx;
+    } else {
+        u_adv = velocity * (u_east - data[idx]) / dx;
+    }
+
+    return u_adv;
+}
+
 int deallocate_matrix(Matrix* mat){
 
     free(mat->data);
