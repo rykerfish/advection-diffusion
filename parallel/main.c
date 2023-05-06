@@ -54,7 +54,8 @@ int main(int argc, char** argv) {
 		deallocate_matrix(&y_grid);
 	}
 
-	
+	MPI_Bcast(&dx, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
 	// calculate size of subgrid
 	int row_len = grid_size;
 	int num_rows_in_block = grid_size / nprocs;
@@ -84,7 +85,7 @@ int main(int argc, char** argv) {
 	// set time step parameters
 	float cfl = 0.01;
 	float dt = cfl * dx;
-	float t_final = 5;
+	float t_final = 10;
 	int n_steps = t_final / dt;
 
 	// set physical parameters
@@ -93,22 +94,22 @@ int main(int argc, char** argv) {
 
 	// do the simulation
 	Matrix u_update;
-	allocate_matrix(&u_update, local_size, local_size);
 
 	// loop through the timesteps
 	int n;
 	int plot_step = 1000;
-	int cols = local_size;
-	int rows = local_size;
-	perform_ghost_comms(padded_data, local_size, row_len, up_neighbor, down_neighbor);
-	printf("Rank %d HERE\n", rank);
-	for(n = 0; n < n_steps; ++n){
-		printf("rank %d in loop\n", rank);
-		float u_lap, u_adv;
-		printf("ENTERING GHOST COMMS\n");
-		perform_ghost_comms(padded_data, local_size, row_len, up_neighbor, down_neighbor);
+	int cols = row_len;
+	int rows = num_rows_in_block;
 
-		printf("THRU GHOST COMMS\n");
+	printf("n steps: %d\n", n_steps);
+
+	allocate_matrix(&u_update, rows, cols);
+
+	for(n = 0; n < n_steps; ++n){
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		float u_lap, u_adv;
+		perform_ghost_comms(padded_data, local_size, row_len, up_neighbor, down_neighbor);
 
 		int x_i, y_i;
 
@@ -148,6 +149,15 @@ int main(int argc, char** argv) {
 				// calculate finite difference laplacian with a 5 point stencil
 				u_lap = (u_west + u_east + u_south + u_north - 4*u_center)*(1/dx)*(1/dx);
 
+				if(rank == 0){
+					if(x_i == 0 && y_i == 0){
+						printf("0,0 u_lap, %f\n", u_lap);
+					} else if(x_i == 25 && y_i == 21){
+						printf("25,21 u_lap, %f\n", u_lap);
+					}
+				}
+
+
 				// implement upwinding
 				if(velocity > 0){
 					u_adv = velocity * (padded_data[pad_idx] - u_west) / dx;
@@ -164,10 +174,6 @@ int main(int argc, char** argv) {
 			padded_data[i+cols] = u_update.data[i];
 		}
 
-		if(n % plot_step == 0){
-			printf("Iteration %d\n", n);
-		}
-
 		// write the previous state to a files for later visualization
 		// if(n % plot_step == 0){
 		// 	char fpath[25];
@@ -176,12 +182,11 @@ int main(int argc, char** argv) {
 		// 	write_to_file(u_grid, fptr);
 		// }
 	}
-
 	
+
+	MPI_Gather(&padded_data[row_len], local_size, MPI_FLOAT, u_grid.data, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
 	if(rank == 0){
-
-		MPI_Gather(&padded_data[row_len], local_size, MPI_FLOAT, &u_grid.data, rows*cols, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
 		char* filepath = "../out/parallel_sim_out.txt";
 		write_to_file(u_grid, filepath);
 
