@@ -54,4 +54,4 @@
     | 4         | 3.178s         | 0.5623               |
     | 16        | 7.262s         | 0.246                |
 
-    Interestingly, in our strong scaling test we see efficiencies of over 1 for all numbers of processes. While this is somewhat surprising, it is not unheard of -- we got similar results in a lab. On the other hand, our efficiency decreased significantly as the number of threads increased in our weak scaling test.
+    Interestingly, in our strong scaling test we see efficiencies of over 1 for all numbers of processes. While this is somewhat surprising, it is not unheard of -- we got similar results in a lab. On the other hand, our efficiency decreased significantly as the number of threads increased in our weak scaling test. We're not quite sure why we see such different results. One possibility could be that we're incorrect about how our problem changes with grid size. It could also be due to the fact that more threads requires more MPI operations, but in that case we would likely see different behavior in the strong scaling test.
