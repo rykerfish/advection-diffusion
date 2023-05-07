@@ -32,11 +32,11 @@
 
     a. Since our code executes a simulation, we chose to visualize the grids at various time steps as heat maps using Python. We compared these to similar images generated from the serial simulation to verify that they were correct (they matched to a precision of 1e-4 across the entire matrix). The generated images are shown below. A concentration blob can be seen advecting right to left while diffusing slightly while it travels. The domain is periodic, so the blob begins to travel through the boundary and reappear on the other side before the visualizations end.
 
-    ![Time Step 2000](./ts2000.png)
-    ![Time Step 4000](./ts4000.png)
-    ![Time Step 6000](./ts6000.png)
-    ![Time Step 8000](./ts8000.png)
-    ![Time Step 10000](./ts10000.png)
+    ![Time Step 2000](./images/ts2000.png)
+    ![Time Step 4000](./images/ts4000.png)
+    ![Time Step 6000](./images/ts6000.png)
+    ![Time Step 8000](./images/ts8000.png)
+    ![Time Step 10000](./images/ts10000.png)
 
 5. (7%) Describe how you designed your strong and weak scalability tests (dimensions and number of processes). Fill out two tables with the headers (number of procs, weak test time, weak test efficiency) and (number of procs, strong test time, strong test efficiency). Comment on whether your efficiency changes, and make a case for what the biggest contributing factors may be to any slowdowns. 
 
