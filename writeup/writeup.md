@@ -28,7 +28,13 @@
 
 4. (6%) Describe the aspect of your code you chose to visualize to understand (and quickly check) whether the code is be behaving as expected. What did you visualize? How did you do this? How do you know it should look like this? Include some of the figures you produced. 
 
-    a. Since our code generates concentration grids, we chose to visualize these grids at various time steps as heat maps using Python. We compared these to similar images generated from the serial simulation to verify that they were correct. 
+    a. Since our code generates concentration grids, we chose to visualize these grids at various time steps as heat maps using Python. We compared these to similar images generated from the serial simulation to verify that they were correct (they matched exactly). The generated images are shown below: 
+
+    ![Time Step 2000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts2000.png)
+    ![Time Step 4000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts4000.png)
+    ![Time Step 6000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts6000.png)
+    ![Time Step 8000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts8000.png)
+    ![Time Step 10000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts10000.png)
 
 5. (7%) Describe how you designed your strong and weak scalability tests (dimensions and number of processes). Fill out two tables with the headers (number of procs, weak test time, weak test efficiency) and (number of procs, strong test time, strong test efficiency). Comment on whether your efficiency changes, and make a case for what the biggest contributing factors may be to any slowdowns. 
 
@@ -48,4 +54,4 @@
     | 4         | 3.178s         | 0.5623               |
     | 16        | 7.262s         | 0.246                |
 
-    Interestingly, in our strong scaling test we see efficiencies of over 1 for all numbers of processes. While this is somewhat surprising, it is not unheard of -- we got similar results in a lab. On the other hand, our efficiency decreased significantly as the number of threads increased in our weak scaling test.
+    Interestingly, in our strong scaling test we see efficiencies of over 1 for all numbers of processes. While this is somewhat surprising, it is not unheard of -- we got similar results in a lab. On the other hand, our efficiency decreased significantly as the number of threads increased in our weak scaling test. We're not quite sure why we see such different results. One possibility could be that we're incorrect about how our problem changes with grid size. It could also be due to the fact that more threads requires more MPI operations, but in that case we would likely see different behavior in the strong scaling test.
