@@ -180,6 +180,15 @@ int initialize_concentration_matrix(Matrix* u_grid, Matrix* x_grid, Matrix* y_gr
 }
 
 int perform_scatter(float* u_grid, int grid_size, int nprocs, float* local_data){
+    // Function to scatter data onto each thread
+    //
+    // Inputs:
+    //      u_grid:     pointer to an array of floats to be scattered (assumed to be on rank 0)
+    //      grid_size:  integer representing width and height of the array (must be square)
+    //      nprocs:     integer representing the number of processes
+    //      local_data: pointer to an array on each thread to store the scattered data in
+    // Ouptus:
+    //      local_size: integer representing the number of floats given to each thread
 
     // calculate size of subgrid
 	int row_len = grid_size;
@@ -198,6 +207,16 @@ int perform_scatter(float* u_grid, int grid_size, int nprocs, float* local_data)
 }
 
 void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_neighbor, int down_neighbor){
+    // Function to perform communications between threads to fill in the ghost regions
+    // 
+    // Inputs:
+    //      local_data:    pointer to a padded array on each thread to send/recieve information
+    //      local_size:    integer represnting the number of floats in local_data, not counting the padding
+    //      row_len:       integer representing the length of each row in local_data
+    //      up_neighbor:   integer representing which thread is "above" this thread
+    //      down_neighbor: integer representing which thread is "below" this thread
+    // Outputs:
+    //      None
     
     // setup for communcations
 	MPI_Status status[4];
@@ -205,6 +224,7 @@ void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_
 	int i;
 	for(i = 0; i < 4; i++) request[i] = MPI_REQUEST_NULL;
 
+    // calculate padded size
     int padded_size = local_size + 2*row_len;
 
 	// do ghost region comms
@@ -213,6 +233,7 @@ void perform_ghost_comms(float* local_data, int local_size, int row_len, int up_
 	MPI_Irecv(local_data, row_len, MPI_FLOAT, up_neighbor, 0, MPI_COMM_WORLD, &request[2]); // recv data from upper neighbor
 	MPI_Irecv(local_data + padded_size - row_len, row_len, MPI_FLOAT, down_neighbor, 0, MPI_COMM_WORLD, &request[3]); // recv data from lower neighbor
 
+    // ensure all communications finish
 	MPI_Waitall(4, request, status);
 }
 
@@ -249,13 +270,31 @@ int write_to_file(Matrix mat, char* filepath){
 }
 
 float compute_laplacian(float* data, int x_i, int y_i, int rows, int cols, float dx, float* u_east, float* u_west){
+    // Function to compute the location of a point
+    // 
+    // Inputs:
+    //      data:   pointer to an array of floats containing the point to compute the laplacian of
+    //      x_i:    the x coordinate (column) of the point within data whose laplacian should be calculated
+    //      y_i:    the y coordinate (row) of the point within data whose laplacian should be calculated
+    //      rows:   the number of rows in data (used for boundary conditions)
+    //      cols:   the number of columns in data (used for boundary conditions)
+    //      dx:     the spacing between points in data
+    //      u_east: a pointer to a float in which the value of the point to the east will be stored
+    //      u_west: a pointer to a float in which the value of the point to the west will be stored
+    // Outputs:
+    //      u_lap:  float representing the laplacian at the current point
 
+    // calculate the relevant index
     int idx = x_i + cols * y_i;
+
+    // declare some useful variables
     float u_north, u_south, u_center;
     int i;
+
+    // fetch value of current point
     u_center = data[idx];
 
-
+    // asses boundary conditions and get values of neighbors
     if(x_i == 0){ // left edge
 		*u_west = data[idx + cols - 1];
 	} else {
@@ -280,31 +319,53 @@ float compute_laplacian(float* data, int x_i, int y_i, int rows, int cols, float
 		u_south = data[idx + cols];
 	}
 
-	// calculate finite difference laplacian with a 5 point stencil
+	// calculate finite difference laplacian with a 5 point stencil and return
     float u_lap = (*u_west + *u_east + u_south + u_north - 4.0*u_center)*(1.0/dx)*(1.0/dx);
     return u_lap;
 }
 
 float compute_advection(float* data, int idx, float velocity, float dx, float u_east, float u_west){
+    // Function to compute the advection at the current point
+    // Inputs:
+    //      data:     pointer to an array of floats containing the point to compute the advection at
+    //      idx:      the index of the current point
+    //      velocity: the velocity at the current point
+    //      dx:       the spacing between grid points
+    //      u_east:   the value of the point to the east of the current point
+    //      u_west:   the value of the point to the west of the current point
+    // Outputs:
+    //      u_adv:    the advection at the current point
     
+    // declare u_adv so it can be set within an if statement
     float u_adv;
 
+    // calculate advection based on velocity
     if(velocity > 0){
         u_adv = velocity * (data[idx] - u_west) / dx;
     } else {
         u_adv = velocity * (u_east - data[idx]) / dx;
     }
 
+    // return advection
     return u_adv;
 }
 
 int deallocate_matrix(Matrix* mat){
-
+    // Function to deallocate a matrix
+    // Inputs: 
+    //      mat:  the matrix to be deallocated
+    // Outpus:
+    //      flag: integer flag, 0 if successful, -1 otherwise
     free(mat->data);
     mat->data = NULL;
 
     mat->dim_x = 0;
     mat->dim_y = 0;
+
+    if(mat->data != NULL){
+        fprintf(stderr, "Error: matrix was not deallocated properly. \n");
+        return -1;
+    }
 
     return 0;
 }
