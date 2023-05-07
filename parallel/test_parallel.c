@@ -235,8 +235,7 @@ int main(){
         printf("---------------------------------\n");
     }
 
-    testCount++;
-    if(rank == 0) printf("Test %d. Testing laplacian on entire grid. \n", testCount);
+    if(rank == 0) printf("Creating parallel laplacian output file for integration tests.\n", testCount);
 
     int rows = 6;
     int cols = 5;
@@ -277,53 +276,42 @@ int main(){
     perform_ghost_comms(integration_local, local_size, cols, up_neighbor, down_neighbor);
 
     Matrix u_lap;
+    Matrix u_adv;
     if(rank == 0){
-        allocate_matrix(&u_lap, rows, cols);
+        allocate_matrix(&u_lap, cols, rows);
+        allocate_matrix(&u_adv, cols, rows);
     }
 
     local_size = cols*num_rows_in_block;
 
     float* lap_local = malloc(local_size * sizeof(float));
+    float* adv_local = malloc(local_size * sizeof(float));
 
     float east_temp, west_temp;
     for(y_i = 0; y_i < num_rows_in_block; y_i++){
         for(x_i = 0; x_i < cols; x_i++){
             lap_local[x_i + y_i*cols] = compute_laplacian(integration_local, x_i, y_i+1, num_rows_in_block, cols, 1, &east_temp, &west_temp);
+            adv_local[x_i + y_i*cols] = compute_advection(integration_local, x_i+(y_i+1)*cols, 1, 1, east_temp, west_temp);
         }
-    }
-
-    if(rank == 0){
-        printf("STARTING MATRIX\n");
-        for(y_i = 0; y_i < 2*num_rows_in_block; y_i++){
-            for(x_i = 0; x_i < cols; x_i++){
-                printf("%f ", integration_local[x_i + y_i*cols]);
-            }
-            printf("\n");
-        }   
-    }
-    
-
-
-    if(rank == 0){
-        printf("\n\nLOCAL LAP\n");
-        for(y_i = 0; y_i < num_rows_in_block; y_i++){
-            for(x_i = 0; x_i < cols; x_i++){
-                printf("%f ", lap_local[x_i + y_i*cols]);
-            }
-            printf("\n");
-        }   
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Gather(lap_local, local_size, MPI_FLOAT, u_lap.data, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(adv_local, local_size, MPI_FLOAT, u_adv.data, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
     free(integration_local);
     free(lap_local);
+    free(adv_local);
 
     if(rank == 0){
-        write_to_file(u_lap, "./test_out/integration_laplacian_parallel.txt");
+        write_to_file(u_lap, "../test_out/integration_laplacian_parallel.txt");
+        printf("Parallel laplacian in parallel/test_out/integration_laplacian_parallel.txt\n");
+        printf("-------------------------\n");
 
+        write_to_file(u_adv, "../test_out/integration_advection_parallel.txt");
+        printf("Parallel advection in parallel/test_out/integration_advection_parallel.txt\n");
+        printf("-------------------------\n");
         deallocate_matrix(&u_lap);
         deallocate_matrix(&integration_mat);
     }

@@ -9,8 +9,8 @@ int allocate_matrix(Matrix* mat, int dim_x, int dim_y){
     // Function to allocate space for a matrix
     // Inputs:
     //      mat: matrix to allocate space for
-    //      dim_x: integer representing number of rows desired
-    //      dim_y: integer representing number of columns desired
+    //      dim_x: integer representing number of columns desired
+    //      dim_y: integer representing number of rows desired
     // Ouputs:
     //      flag: integer flag, 0 if successful, -1 if not
 
@@ -256,10 +256,10 @@ int write_to_file(Matrix mat, char* filepath){
     }
 
     int i, j;
-    for(i = 0; i < mat.dim_x; ++i){
-        for(j = 0; j < mat.dim_y; ++j){
+    for(j = 0; j < mat.dim_y; ++j){
+        for(i = 0; i < mat.dim_x; ++i){
             fprintf(fptr, "%f", mat.data[i + j*mat.dim_x]);
-            if(j < mat.dim_y - 1) fprintf(fptr, ", ");
+            if(i < mat.dim_x - 1) fprintf(fptr, ", ");
         }
         fprintf(fptr, "\n");
     }
@@ -313,11 +313,7 @@ float compute_laplacian(float* data, int x_i, int y_i, int rows, int cols, float
 		u_north = data[idx - cols];
 	}
 
-	if(y_i == rows - 1){ // bottom edge
-		u_south = data[x_i];
-	} else {
-		u_south = data[idx + cols];
-	}
+    u_south = data[idx + cols];
 
 	// calculate finite difference laplacian with a 5 point stencil and return
     float u_lap = (*u_west + *u_east + u_south + u_north - 4.0*u_center)*(1.0/dx)*(1.0/dx);

@@ -39,9 +39,9 @@ int main(int argc, char** argv) {
 		// allocate matrices
 		int rows = grid_size;
 		int cols = grid_size;
-		allocate_matrix(&u_grid, rows, cols);
-		allocate_matrix(&x_grid, rows, cols);
-		allocate_matrix(&y_grid, rows, cols);
+		allocate_matrix(&u_grid, cols, rows);
+		allocate_matrix(&x_grid, cols, rows);
+		allocate_matrix(&y_grid, cols, rows);
 
 		// create grids for constructing the concentration grid
 		float a = -3.0; 
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
 
 	// write the final concentration matrix to a txt file
 	if(rank == 0){
-		char* filepath = "../out/parallel_sim_out.txt";
+		char* filepath = "../test_out/parallel_sim_out.txt";
 		write_to_file(u_grid, filepath);
 
 		deallocate_matrix(&u_grid);
