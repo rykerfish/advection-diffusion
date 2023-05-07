@@ -30,7 +30,11 @@
 
     a. Since our code generates concentration grids, we chose to visualize these grids at various time steps as heat maps using Python. We compared these to similar images generated from the serial simulation to verify that they were correct (they matched exactly). The generated images are shown below: 
 
-    
+    ![Time Step 2000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts2000.png)
+    ![Time Step 4000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts4000.png)
+    ![Time Step 6000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts6000.png)
+    ![Time Step 8000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts8000.png)
+    ![Time Step 10000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts10000.png)
 
 5. (7%) Describe how you designed your strong and weak scalability tests (dimensions and number of processes). Fill out two tables with the headers (number of procs, weak test time, weak test efficiency) and (number of procs, strong test time, strong test efficiency). Comment on whether your efficiency changes, and make a case for what the biggest contributing factors may be to any slowdowns. 
 
