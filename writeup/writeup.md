@@ -18,23 +18,25 @@
 
 2. (10%) Using detailed sentences or pseudocode, how are you breaking up this algorithm using a distributed memory (MPI) model? Why is this algorithm not embarrassingly parallel? Describe the initial distribution of the data/model, and what data need to be transferred between processes throughout. If it is helpful to introduce new notation, please do so, but be sure to define each index/variable specifically defined at its first use. You may include diagrams as needed. 
 
-    a. Our simulation occurs on a grid (say of size N x N), so our paralellization strategy involves decomosing this domain onto multiple threads. Assume that we have np threads. That means that each thread gets an N/np x N matrix to work with. Since the laplacian uses a 5-point stencil, each thread also needs one row of padding above and below it, so each thread's domain was padded to (N/np + 2) x N. Then within the for loop, each thread computes the diffusive and advective component of its data in parallel, and between each time step the ghost regions are updated with new information from the other threads. Finally, whenever the full concentration data is needed (e.g. for visualization), the data from all the threads is gathered and the full matrix can be written to a file.
+    a. Our simulation occurs on a grid (say of size N x N), so our paralellization strategy involves decomosing this domain onto multiple threads. Assume that we have np threads. We decomposed the grid into rows that span all columns of a grid but only have a few rows per thread. In other words, this means that each thread gets an N/np x N matrix to work with. Since the laplacian uses a 5-point stencil, each thread also needs one row of padding above and below it, so each thread's domain was padded to (N/np + 2) x N. Then within the for loop, each thread computes the diffusive and advective component of its data in parallel, and between each time step the ghost regions are updated with new information from the other threads. Finally, whenever the full concentration data is needed (e.g. for visualization), the data from all the threads is gathered and the full matrix can be written to a file.
 
 3. (5%) Describe your test suite and use its results to make a case that your code is behaving as expected. How do you know your code is right? Are there any limitations to your test suite? 
 
-    a. Our test suite is broken up into two main parts: parallel tests and serial tests. The serial tests ensure that the setup of the code works as expected. In this section, we test matrix allocation and deallocation and the setup of our grids, which are used to create the initial concentration vector. We use the output of the grid test to test the setup of the concentration vector, forming our first integration test. All of these grid tests are performed using a spot check method, where enough elements are compared to the known correct values (taken from Matlab) that there will be an extrememly low likelihood of them all being correct if the entire matrix is not. In this section of the test suite we also compute some matrices in serial to use for our integration tests in the parallel section.
+    a. Our test suite is broken up into two main parts: parallel tests and serial tests. The serial tests ensure that the setup of the code works as expected. In this section, we test matrix allocation and deallocation and the setup of our grids, which are used to create the initial concentration matrix. We use the output of the grid test to test the setup of the concentration matrix, forming our first integration test. All of these grid tests are performed using a spot check method, where enough elements are compared to the known correct values (taken from Matlab) that there will be an extrememly low likelihood of them all being correct if the entire matrix is not. In this section of the test suite we also compute some matrices in serial to use for our integration tests in the parallel section.
 
     Our parallel section starts with unit tests to test our parallel functions. We begin by testing our scatter function, using a small matrix to ensure the right data ends up on each thread. WE then test our ghost region commnication function, using the same small matrix to ensure the correct padding is used. We then move on to testing our laplacian function, running three unit tests to ensure it computes the laplacian correctly in the middle, on the side, and on a corner of a small test matrix whose laplacians we compute by hand to check. We also test the laplacian on an entire, larger, grid. Our final unit test ensures that our advection works as intended, verified by calculating the expected result by hand. We then perform an integration test on the laplacian, creating a small test matrix, scattering it, adding ghost regions, and then finally computing the laplacian and comparing it to the serial result calculated in the previous test section. 
 
+    Finally, the integration tests were written in Python. This is because they only compare files that are output from the serial and parallel C code. The integration tests can be ran by calling "python integration_tests.py" once the test.sh script has ran to completion and all files have been generated.
+
 4. (6%) Describe the aspect of your code you chose to visualize to understand (and quickly check) whether the code is be behaving as expected. What did you visualize? How did you do this? How do you know it should look like this? Include some of the figures you produced. 
 
-    a. Since our code generates concentration grids, we chose to visualize these grids at various time steps as heat maps using Python. We compared these to similar images generated from the serial simulation to verify that they were correct (they matched exactly). The generated images are shown below: 
+    a. Since our code executes a simulation, we chose to visualize the grids at various time steps as heat maps using Python. We compared these to similar images generated from the serial simulation to verify that they were correct (they matched to a precision of 1e-4 across the entire matrix). The generated images are shown below. A concentration blob can be seen advecting right to left while diffusing slightly while it travels. The domain is periodic, so the blob begins to travel through the boundary and reappear on the other side before the visualizations end.
 
-    ![Time Step 2000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts2000.png)
-    ![Time Step 4000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts4000.png)
-    ![Time Step 6000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts6000.png)
-    ![Time Step 8000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts8000.png)
-    ![Time Step 10000](https://github.com/rykerfish/advection-diffusion/blob/main/writeup/ts10000.png)
+    ![Time Step 2000](./ts2000.png)
+    ![Time Step 4000](./ts4000.png)
+    ![Time Step 6000](./ts6000.png)
+    ![Time Step 8000](./ts8000.png)
+    ![Time Step 10000](./ts10000.png)
 
 5. (7%) Describe how you designed your strong and weak scalability tests (dimensions and number of processes). Fill out two tables with the headers (number of procs, weak test time, weak test efficiency) and (number of procs, strong test time, strong test efficiency). Comment on whether your efficiency changes, and make a case for what the biggest contributing factors may be to any slowdowns. 
 
@@ -48,10 +50,10 @@
     | 8         | 14.264s          | 1.1729                 |
     | 16        | 8.063s           | 1.0375                 |
 
-    | # Threads | Weak Test Time | Weak Test Efficiency |
-    |-----------|----------------|----------------------|
-    | 1         | 1.787s         | 1                    |
-    | 4         | 3.178s         | 0.5623               |
-    | 16        | 7.262s         | 0.246                |
+    | # Threads | Grid size| Weak Test Time | Weak Test Efficiency |
+    |-----------|----------| ---------------|----------------------|
+    | 1         |   64x64  |  1.787s        | 1                    |
+    | 4         |  128x128 |  3.178s        | 0.5623               |
+    | 16        |  256x256 |  7.262s        | 0.246                |
 
-    Interestingly, in our strong scaling test we see efficiencies of over 1 for all numbers of processes. While this is somewhat surprising, it is not unheard of -- we got similar results in a lab. On the other hand, our efficiency decreased significantly as the number of threads increased in our weak scaling test. We're not quite sure why we see such different results. One possibility could be that we're incorrect about how our problem changes with grid size. It could also be due to the fact that more threads requires more MPI operations, but in that case we would likely see different behavior in the strong scaling test.
+    Interestingly, in our strong scaling test we see efficiencies of over 1 for all numbers of processes. While this is somewhat surprising, it is not unheard of -- we got similar results in a previous lab. On the other hand, our efficiency decreased significantly as the number of threads increased in our weak scaling test. We're not quite sure why we see such different results. One possibility could be that we're incorrect about how our problem changes with grid size. It could also be due to the fact that more threads requires more MPI operations, but in that case we would likely see different behavior in the strong scaling test.
