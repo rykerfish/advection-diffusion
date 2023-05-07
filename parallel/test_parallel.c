@@ -235,12 +235,60 @@ int main(){
         printf("---------------------------------\n");
     }
 
+    testCount++;
+    if(rank == 0) printf("Test %d. Testing laplacian on entire grid. \n", testCount);
+
+    int rows = 6;
+    int cols = 5;
+    Matrix integration_mat;
+    if(rank == 0){
+        allocate_matrix(integration_mat, cols, rows);
+        int x_i, y_i;
+        for(x_i = 0; x_i < cols; x_i++){
+            for(y_i = 0; y_i < rows; y_i++){
+                integration_mat.data[x_i + y_i*cols] = x_i + y_i*cols;
+            }
+        }
+    }
+
+    // calculate size of subgrid
+    num_rows_in_block = rows / nprocs;
+    local_size = cols * num_rows_in_block;
+    padded_size = local_size + 2*row_len; // add 2 for ghost region rows
+	
+    // allocate memory for local array
+    float* integration_local = (float*)malloc(padded_size * sizeof(float));
+
+    // scatter the data to each process
+    // start row_len into local_data so that there is room for ghost region
+    MPI_Scatter(integration_mat.data, local_size, MPI_FLOAT, &integration_local[cols], local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+    Matrix u_lap;
+    allocate_matrix(u_lap, rows, cols);
+
+    int x_i, y_i;
+    float* east_temp, west_temp;
+    for(x_i = 0; x_i < cols; x_i++){
+        for(y_i = 0; y_i < num_rows_in_block; y_i++){
+            u_lap[x_i + y_i*cols] = compute_laplacian(integration_local, x_i, y_i+1, num_rows_in_block, cols, 1, east_temp, west_temp);
+        }
+    }
+
+
+
+
+
+
 
     if(rank == 0){
 
 	    printf("Done with testing, %d out of %d passed. \n", testsPassed, testCount);
 
     }
+
+    
+
+    free(local_data);
 
     MPI_Finalize();
 
