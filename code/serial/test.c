@@ -10,6 +10,7 @@ int main(){
 
 
     // ------------ Testing matrix creation/teardown --------
+    printf("--------- BEGIN SERIAL UNIT TESTS -----------\n");
     testCount++;
     printf("Test %d. Testing matrix creation/teardown\n", testCount);
     
@@ -84,6 +85,9 @@ int main(){
         printf("Test %d passed.\n", testCount);
     }
 
+    printf("------------ SERIAL UNIT TESTS RESULTS-------------\n");
+    printf("Tests passed: %d out of %d\n", testsPassed, testCount);
+    printf("Tests failed: %d out of %d\n", testsFailed, testCount);
 
     // Use output of X and Y grids to test concentration grid construction
     test_failed = 0;
@@ -92,9 +96,9 @@ int main(){
     initialize_concentration_matrix(&u_grid, &x_grid, &y_grid);
 
     if(abs(u_grid.data[104+186*grid_size] - 0.003504744309636) > 1e-6) test_failed = 1;
+    printf("--------- BEGIN SERIAL INTEGRATION TESTS -----------\n");
 
-
-    printf("------------Creating serial laplacian output file for integration tests-------------------\n");
+    printf("Creating serial output files for integration tests:\n");
 
     int rows = 6;
     int cols = 5;
@@ -122,9 +126,9 @@ int main(){
 
 
     write_to_file(u_lap, "../test_out/integration_laplacian.txt");
-    printf("Serial laplacian in parallel/test_out/integration_laplacian.txt\n");
+    printf("Serial laplacian for integration tests written to test_out/integration_laplacian.txt\n");
     write_to_file(u_adv, "../test_out/integration_advection.txt");
-    printf("Serial advection in parallel/test_out/integration_advection.txt\n");
+    printf("Serial advection for integration tests written to test_out/integration_advection.txt\n");
 
     deallocate_matrix(&integration_mat);
     deallocate_matrix(&u_adv);

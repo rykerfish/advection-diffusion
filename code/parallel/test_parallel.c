@@ -13,11 +13,7 @@ int main(){
     unsigned int testsFailed = 0;
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if(rank == 0){
-        printf("\n\n---------------PARALLEL TESTS-------------\n\n");
-    }
-    
-
+    if(rank == 0) printf("\n\n---------------BEGIN PARALLEL UNIT TESTS-------------\n");
 
     // ------------ testing scatter -------------
     Matrix mat;
@@ -25,8 +21,7 @@ int main(){
     int i;
     if(rank == 0){
         testCount++;
-        printf("Test %d. Testing scatter\n", testCount);
-        printf("------------------------------------------------- \n");
+        printf("Test %d. Testing scatter.\n", testCount);
         allocate_matrix(&mat, grid_size, grid_size);
         
         for(i = 0; i < 9; i++){
@@ -71,7 +66,11 @@ int main(){
     if(sum_wrong > 0){
         testsFailed++;
     } else{
-        testsPassed++;
+        if(rank == 0){
+            testsPassed++;
+            printf("Test %d passed.\n", testCount);
+        }
+
     }
 
     if(testsFailed > 1) testsFailed = 1;
@@ -82,7 +81,6 @@ int main(){
     if(rank == 0){
         testCount++;
         printf("Test %d. Testing ghost region communications.\n", testCount);
-        printf("------------------------------------------------- \n");
     }
  
     int up_neighbor, down_neighbor;
@@ -117,6 +115,7 @@ int main(){
         } 
         else{
             testsPassed++;
+            printf("Test %d passed.\n", testCount);
         }
     }
 
@@ -124,7 +123,6 @@ int main(){
     if(rank == 0){
         testCount++;
         printf("Test %d. Testing laplacian calculation in middle of array.\n", testCount);
-        printf("------------------------------------------------- \n");
     }
 
     int test_passed = 0;
@@ -143,6 +141,7 @@ int main(){
             printf("TEST FAILED: Incorrect laplacian using middle of rank 1 \n");
         } else{
             testsPassed++;
+            printf("Test %d passed.\n", testCount);
         }
     }
 
@@ -150,7 +149,6 @@ int main(){
     if(rank == 0){
         testCount++;
         printf("Test %d. Testing laplacian calculation on the side of array.\n", testCount);
-        printf("------------------------------------------------- \n");
     }
 
     test_passed = 0;
@@ -169,6 +167,7 @@ int main(){
             printf("TEST FAILED: Incorrect laplacian using right edge of rank 1 \n");
         } else{
             testsPassed++;
+            printf("Test %d passed.\n", testCount);
         }
     }
 
@@ -176,7 +175,6 @@ int main(){
     if(rank == 0){
         testCount++;
         printf("Test %d. Testing laplacian calculation on the corner of array.\n", testCount);
-        printf("------------------------------------------------- \n");
     }
 
     test_passed = 0;
@@ -195,6 +193,7 @@ int main(){
             printf("TEST FAILED: Incorrect laplacian using top right corner of rank 1 \n");
         } else{
             testsPassed++;
+            printf("Test %d passed.\n", testCount);
         }
     }
 
@@ -202,7 +201,7 @@ int main(){
     
     MPI_Barrier(MPI_COMM_WORLD);
     testCount++;
-    if(rank == 0) printf("Test %d. Testing advection term.\n", testCount);
+    if(rank == 0) printf("Test %d. Testing advection term calculation.\n", testCount);
 
     float target_adv = 1.0;
     int x_i = 1; 
@@ -231,11 +230,18 @@ int main(){
             testsFailed++;
         } else {
             testsPassed++;
+            printf("Test %d passed.\n", testCount);
         }
-        printf("---------------------------------\n");
     }
 
-    if(rank == 0) printf("Creating parallel laplacian output file for integration tests.\n", testCount);
+    if(rank == 0){
+        printf("------------ PARALLEL UNIT TESTS RESULTS-------------\n");
+        printf("Tests passed: %d out of %d\n", testsPassed, testCount);
+        printf("Tests failed: %d out of %d\n", testsFailed, testCount);
+
+        printf("--------- BEGIN PARALLEL INTEGRATION TESTS -----------\n");
+        printf("Creating parallel output files for integration tests:\n");
+    } 
 
     int rows = 6;
     int cols = 5;
@@ -306,12 +312,10 @@ int main(){
 
     if(rank == 0){
         write_to_file(u_lap, "../test_out/integration_laplacian_parallel.txt");
-        printf("Parallel laplacian in parallel/test_out/integration_laplacian_parallel.txt\n");
-        printf("-------------------------\n");
+        printf("Parallel laplacian for integration tests written to in test_out/integration_laplacian_parallel.txt\n");
 
         write_to_file(u_adv, "../test_out/integration_advection_parallel.txt");
-        printf("Parallel advection in parallel/test_out/integration_advection_parallel.txt\n");
-        printf("-------------------------\n");
+        printf("Parallel advection for integration tests written to test_out/integration_advection_parallel.txt\n");
         deallocate_matrix(&u_lap);
         deallocate_matrix(&integration_mat);
     }

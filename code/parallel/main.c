@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
 	// set time step parameters
 	float cfl = 0.01;
 	float dt = cfl * dx;
-	float t_final = 50;
+	float t_final = 10;
 	int n_steps = t_final / dt;
 
 	// set physical parameters
@@ -152,16 +152,16 @@ int main(int argc, char** argv) {
 		}
 
 		//  write the previous state to a files for later visualization
-		if(n % plot_step == 0){
-			MPI_Gather(&padded_data[row_len], local_size, MPI_FLOAT, u_grid.data, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
-			if(rank == 0){
-				char fpath[25];
-				char* fptr = fpath;
-				sprintf(fptr, "./output/state_%d.csv", img_counter);
-				img_counter++;
-				write_to_file(u_grid, fptr);
-			}
-		}
+		// if(n % plot_step == 0){
+		// 	MPI_Gather(&padded_data[row_len], local_size, MPI_FLOAT, u_grid.data, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+		// 	if(rank == 0){
+		// 		char fpath[25];
+		// 		char* fptr = fpath;
+		// 		sprintf(fptr, "./output/state_%d.csv", img_counter);
+		// 		img_counter++;
+		// 		write_to_file(u_grid, fptr);
+		// 	}
+		// }
 	}
 
 	// combine all of the data onto thread 0 to be written out
