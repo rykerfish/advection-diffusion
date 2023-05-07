@@ -1,0 +1,28 @@
+Running strong scaling test
+Job ran on: compute200
+Testing with 1 threads.
+
+real	2m13.847s
+user	2m13.548s
+sys	0m0.140s
+Testing with 2 threads.
+
+real	0m56.762s
+user	1m52.629s
+sys	0m0.229s
+Testing with 4 threads.
+
+real	0m27.883s
+user	1m50.199s
+sys	0m0.551s
+Testing with 8 threads.
+
+real	0m14.264s
+user	1m49.996s
+sys	0m1.816s
+Testing with 16 threads.
+
+real	0m8.063s
+user	1m54.831s
+sys	0m6.148s
+Job finished.

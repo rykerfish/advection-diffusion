@@ -7,7 +7,7 @@
 echo "Running weak scaling test"
 echo "Job ran on: $SLURM_NODELIST"
 
-n_base=16
+n_base=128
 
 module load mpi/openmpi/gcc/4.1.1
 mpicc -o main main.c parallel.c -lm
@@ -15,8 +15,8 @@ mpicc -o main main.c parallel.c -lm
 for((i=0; i<=2; i+=1)); do
 
     p=$((4**i))
-    n=$((n_base*2**i))
-    echo "Testing with $p threads."
+    n=$((n_base*(2**i)))
+    echo "Testing with $p threads and $n size grid."
 
     time mpirun -np $p ./main $n
 

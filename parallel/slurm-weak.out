@@ -1,0 +1,18 @@
+Running weak scaling test
+Job ran on: compute134
+Testing with 1 threads.
+
+real	0m1.787s
+user	0m1.391s
+sys	0m0.190s
+Testing with 4 threads.
+
+real	0m3.178s
+user	0m11.202s
+sys	0m0.836s
+Testing with 16 threads.
+
+real	0m7.262s
+user	1m41.698s
+sys	0m6.785s
+Job finished.
