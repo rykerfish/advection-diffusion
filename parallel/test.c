@@ -92,7 +92,44 @@ int main(){
     allocate_matrix(&u_grid, grid_size, grid_size);
     initialize_concentration_matrix(&u_grid, &x_grid, &y_grid);
 
-    if(abs(u_grid[104+186*grid_size] - 0.003504744309636) > 1e-6) test_failed = 1;
+    if(abs(u_grid.data[104+186*grid_size] - 0.003504744309636) > 1e-6) test_failed = 1;
+
+
+
+    printf("------------ Creating laplacian file for parallel integration tests.\n");
+
+    int rows = 6;
+    int cols = 5;
+    Matrix integration_mat;
+    allocate_matrix(&integration_mat, cols, rows);
+    int x_i, y_i;
+    for(y_i = 0; y_i < rows; y_i++){
+        for(x_i = 0; x_i < cols; x_i++){
+            integration_mat.data[x_i + y_i*cols] = x_i + y_i*cols;
+        }
+    }
+
+    Matrix u_lap;
+    allocate_matrix(&u_lap, cols, rows);
+    float east_temp;
+    float west_temp;
+    for(y_i = 0; y_i < rows; y_i++){
+        for(x_i = 0; x_i < cols; x_i++){
+            u_lap.data[x_i + y_i*cols] = compute_laplacian(integration_mat.data, x_i, y_i, rows, cols, 1, &east_temp, &west_temp);
+        }
+    }
+
+
+
+    write_to_file(u_lap, "./test_out/integration_laplacian.txt");
+
+
+
+
+
+
+    deallocate_matrix(&integration_mat);
+    deallocate_matrix(&u_lap);
 
 
     return 0;
