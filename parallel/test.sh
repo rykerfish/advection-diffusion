@@ -14,3 +14,5 @@ module load mpi/openmpi/gcc/4.1.1
 mpicc -o test_par test_parallel.c parallel.c -lm
 
 mpirun -np 3 test_par
+
+echo "TESTS FINISHED"
