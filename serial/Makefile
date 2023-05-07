@@ -1,8 +1,13 @@
-buildMain:
+default:
 	gcc -g -o main main.c serial.c -lm 
 
-runMain:
-	gdb ./main
+run:
+	./main 128
 
-cleanMain:
+clean:
 	rm main
+
+test:
+	gcc -g -o test test.c serial.c -lm
+	./test
+	rm ./test

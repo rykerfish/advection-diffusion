@@ -3,19 +3,26 @@
 #include <stdlib.h>
 #include "serial.h"
 
-int main() {
+int main(int argc, char** argv) {
+
+
+	if(argc < 1){
+		printf("Error: Should call with <grid size>\n");
+		return 1;
+	}
+	int grid_size = atoi(argv[1]);
 
 	// declare vectors
-	Vector u_grid; 
-	Vector x_grid;
-	Vector y_grid;
+	Matrix u_grid; 
+	Matrix x_grid;
+	Matrix y_grid;
 	
-	// allocate vectors
-	int rows = 128;
-	int cols = 128;
-	allocate_vector(&u_grid, rows, cols);
-	allocate_vector(&x_grid, rows, cols);
-	allocate_vector(&y_grid, rows, cols);
+	// allocate matrixs
+	int rows = grid_size;
+	int cols = grid_size;
+	allocate_matrix(&u_grid, cols, rows);
+	allocate_matrix(&x_grid, cols, rows);
+	allocate_matrix(&y_grid, cols, rows);
 	
 	// create grids for constructing the concentration grid
 	float x_start = -3.0;
@@ -29,7 +36,7 @@ int main() {
 	float dy = y_grid.data[rows + 1] - y_grid.data[0];
 
 	// construct the concentration grid
-	initialize_concentration_vector(&u_grid, &x_grid, &y_grid);
+	initialize_concentration_matrix(&u_grid, &x_grid, &y_grid);
 	
 	// set time step parameters
 	float cfl = 0.01;
@@ -39,10 +46,11 @@ int main() {
 
 	// set physical parameters
 	float diffusion = 0.01;
+	float velocity = 0.1;
 
 	// do the simulation
-	Vector u_update;
-	allocate_vector(&u_update, rows, cols);
+	Matrix u_update;
+	allocate_matrix(&u_update, rows, cols);
 
 	// loop through the timesteps
 	int n;
@@ -86,7 +94,6 @@ int main() {
 				u_lap = (u_west + u_east + u_south + u_north - 4*u_center)*(1/dx)*(1/dx);
 
 				// implement upwinding
-				float velocity = get_velocity(x_i);
 				if(velocity > 0){
 					u_adv = velocity * (u_grid.data[idx] - u_west) / dx;
 				} else {
@@ -104,14 +111,14 @@ int main() {
 
 	}
 
-	char* filepath = "../out/serial_sim_out.txt";
+	char* filepath = "../test_out/serial_sim_out.txt";
 	write_to_file(u_grid, filepath);
 	
 	// clean up
-	deallocate_vector(&u_grid);
-	deallocate_vector(&x_grid);
-	deallocate_vector(&y_grid);
-	deallocate_vector(&u_update);
+	deallocate_matrix(&u_grid);
+	deallocate_matrix(&x_grid);
+	deallocate_matrix(&y_grid);
+	deallocate_matrix(&u_update);
 
 	return 0;
 }
