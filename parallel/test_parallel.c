@@ -242,10 +242,9 @@ int main(){
     int cols = 5;
     Matrix integration_mat;
     if(rank == 0){
-        allocate_matrix(integration_mat, cols, rows);
-        int x_i, y_i;
-        for(x_i = 0; x_i < cols; x_i++){
-            for(y_i = 0; y_i < rows; y_i++){
+        allocate_matrix(&integration_mat, cols, rows);
+        for(y_i = 0; y_i < rows; y_i++){
+            for(x_i = 0; x_i < cols; x_i++){
                 integration_mat.data[x_i + y_i*cols] = x_i + y_i*cols;
             }
         }
@@ -254,24 +253,79 @@ int main(){
     // calculate size of subgrid
     num_rows_in_block = rows / nprocs;
     local_size = cols * num_rows_in_block;
-    padded_size = local_size + 2*row_len; // add 2 for ghost region rows
+    padded_size = local_size + 2*cols; // add 2 for ghost region rows
 	
     // allocate memory for local array
     float* integration_local = (float*)malloc(padded_size * sizeof(float));
+
+	if(rank == 0){
+		up_neighbor = nprocs - 1;
+	} else {
+		up_neighbor = rank - 1;
+	}
+
+	if(rank == nprocs - 1){
+		down_neighbor = 0;
+	} else {
+		down_neighbor = rank + 1;
+	}
 
     // scatter the data to each process
     // start row_len into local_data so that there is room for ghost region
     MPI_Scatter(integration_mat.data, local_size, MPI_FLOAT, &integration_local[cols], local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-    Matrix u_lap;
-    allocate_matrix(u_lap, rows, cols);
+    perform_ghost_comms(integration_local, local_size, cols, up_neighbor, down_neighbor);
 
-    int x_i, y_i;
-    float* east_temp, west_temp;
-    for(x_i = 0; x_i < cols; x_i++){
-        for(y_i = 0; y_i < num_rows_in_block; y_i++){
-            u_lap[x_i + y_i*cols] = compute_laplacian(integration_local, x_i, y_i+1, num_rows_in_block, cols, 1, east_temp, west_temp);
+    Matrix u_lap;
+    if(rank == 0){
+        allocate_matrix(&u_lap, rows, cols);
+    }
+
+    local_size = cols*num_rows_in_block;
+
+    float* lap_local = malloc(local_size * sizeof(float));
+
+    float east_temp, west_temp;
+    for(y_i = 0; y_i < num_rows_in_block; y_i++){
+        for(x_i = 0; x_i < cols; x_i++){
+            lap_local[x_i + y_i*cols] = compute_laplacian(integration_local, x_i, y_i+1, num_rows_in_block, cols, 1, &east_temp, &west_temp);
         }
+    }
+
+    if(rank == 0){
+        printf("STARTING MATRIX\n");
+        for(y_i = 0; y_i < 2*num_rows_in_block; y_i++){
+            for(x_i = 0; x_i < cols; x_i++){
+                printf("%f ", integration_local[x_i + y_i*cols]);
+            }
+            printf("\n");
+        }   
+    }
+    
+
+
+    if(rank == 0){
+        printf("\n\nLOCAL LAP\n");
+        for(y_i = 0; y_i < num_rows_in_block; y_i++){
+            for(x_i = 0; x_i < cols; x_i++){
+                printf("%f ", lap_local[x_i + y_i*cols]);
+            }
+            printf("\n");
+        }   
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    MPI_Gather(lap_local, local_size, MPI_FLOAT, u_lap.data, local_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+    free(integration_local);
+    free(lap_local);
+
+    if(rank == 0){
+        write_to_file(u_lap, "./test_out/integration_laplacian_parallel.txt");
+
+        deallocate_matrix(&u_lap);
+        deallocate_matrix(&integration_mat);
     }
 
 
@@ -288,7 +342,7 @@ int main(){
 
     
 
-    free(local_data);
+    // free(local_data);
 
     MPI_Finalize();
 
