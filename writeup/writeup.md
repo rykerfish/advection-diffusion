@@ -28,7 +28,9 @@
 
 4. (6%) Describe the aspect of your code you chose to visualize to understand (and quickly check) whether the code is be behaving as expected. What did you visualize? How did you do this? How do you know it should look like this? Include some of the figures you produced. 
 
-    a. Since our code generates concentration grids, we chose to visualize these grids at various time steps as heat maps using Python. We compared these to similar images generated from the serial simulation to verify that they were correct. 
+    a. Since our code generates concentration grids, we chose to visualize these grids at various time steps as heat maps using Python. We compared these to similar images generated from the serial simulation to verify that they were correct (they matched exactly). The generated images are shown below: 
+
+    
 
 5. (7%) Describe how you designed your strong and weak scalability tests (dimensions and number of processes). Fill out two tables with the headers (number of procs, weak test time, weak test efficiency) and (number of procs, strong test time, strong test efficiency). Comment on whether your efficiency changes, and make a case for what the biggest contributing factors may be to any slowdowns. 
 
