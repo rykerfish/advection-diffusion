@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=4
-#SBATCH -t 00:1:00
+#SBATCH -t 00:10:00
 
 #Record the node that we ran on
 echo "Job ran on: $SLURM_NODELIST"
